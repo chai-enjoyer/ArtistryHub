@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
@@ -29,46 +28,38 @@ class _PostPageState extends State<PostPage> {
   }
 
   Future<void> _pickAudioFile() async {
-    print('Pick audio file button pressed');
     try {
-      print('Opening file picker...');
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.audio,
         allowMultiple: false,
       );
-      print('File picker result: $result');
       if (result != null && result.files.single.path != null) {
         final file = File(result.files.single.path!);
-        print('Selected file path: ${file.path}');
         final appDir = await getApplicationDocumentsDirectory();
         final fileName = result.files.single.name;
         final newPath = '${appDir.path}/music_snippets/$fileName';
-        print('Copying file to: $newPath');
         await Directory('${appDir.path}/music_snippets').create(recursive: true);
         await file.copy(newPath);
-        
+
         final metadata = await AudioUtils.extractMetadata(newPath);
-        
+
         setState(() {
           _selectedFilePath = newPath;
           _fileName = fileName;
           _audioMetadata = metadata;
           _errorMessage = null;
         });
-        print('File copied successfully');
       } else {
         setState(() {
           _errorMessage = 'No file selected.';
           _audioMetadata = null;
         });
-        print('No file selected');
       }
     } catch (e) {
       setState(() {
         _errorMessage = 'Failed to pick file: $e';
         _audioMetadata = null;
       });
-      print('Error picking file: $e');
     }
   }
 
@@ -116,80 +107,72 @@ class _PostPageState extends State<PostPage> {
       appBar: AppBar(
         title: Text(
           'Create Post',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w800),
+          style: Theme.of(context).textTheme.headlineMedium,
         ),
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(6.0),
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Card(
-                color: Theme.of(context).cardColor,
-                child: Padding(
-                  padding: const EdgeInsets.all(0.0),
-                  child: TextField(
-                    controller: _contentController,
-                    decoration: InputDecoration(
-                      hintText: 'Share your music or thoughts...',
-                      hintStyle: GoogleFonts.poppins(),
-                      border: InputBorder.none,
-                    ),
-                    style: TextStyle(color: Theme.of(context).primaryColor),
-                    maxLines: 5,
-                  ),
+              TextField(
+                controller: _contentController,
+                decoration: const InputDecoration(
+                  hintText: 'Share your thoughts...',
                 ),
+                style: Theme.of(context).textTheme.bodyMedium,
+                maxLines: 5,
               ),
-              if (_audioMetadata != null)
-                Card(
-                  child: ListTile(
-                    leading: _audioMetadata?.coverPath != null
-                        ? Image.file(
-                            File(_audioMetadata!.coverPath!),
-                            width: 50,
-                            height: 50,
-                            fit: BoxFit.cover,
-                          )
-                        : const Icon(Icons.music_note),
-                    title: Text(
-                      _audioMetadata?.title ?? 'Unknown Title',
-                      style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-                    ),
-                    subtitle: Text(
-                      _audioMetadata?.artist ?? 'Unknown Artist',
-                      style: GoogleFonts.poppins(),
-                    ),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () {
-                        setState(() {
-                          _selectedFilePath = null;
-                          _fileName = null;
-                          _audioMetadata = null;
-                        });
-                      },
-                    ),
-                  ),
-                ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 16),
+              AnimatedOpacity(
+                opacity: _audioMetadata != null ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 300),
+                child: _audioMetadata != null
+                    ? ListTile(
+                        leading: _audioMetadata?.coverPath != null
+                            ? Image.file(
+                                File(_audioMetadata!.coverPath!),
+                                width: 40,
+                                height: 40,
+                                fit: BoxFit.cover,
+                              )
+                            : const Icon(Icons.music_note),
+                        title: Text(
+                          _audioMetadata?.title ?? 'Unknown Title',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        subtitle: Text(
+                          _audioMetadata?.artist ?? 'Unknown Artist',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () {
+                            setState(() {
+                              _selectedFilePath = null;
+                              _fileName = null;
+                              _audioMetadata = null;
+                            });
+                          },
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+              const SizedBox(height: 16),
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   OutlinedButton.icon(
-                    onPressed: _pickAudioFile,
-                    icon: const Icon(Icons.music_note, size: 28),
+                    icon: const Icon(Icons.music_note),
                     label: Text(
                       _audioMetadata != null ? 'Change Music' : 'Add Music',
-                      style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
                     ),
+                    onPressed: _pickAudioFile,
                   ),
                   ElevatedButton(
                     onPressed: _submitPost,
-                    child: Text(
-                      'Post',
-                      style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
-                    ),
+                    child: const Text('Post'),
                   ),
                 ],
               ),
@@ -198,9 +181,7 @@ class _PostPageState extends State<PostPage> {
                   padding: const EdgeInsets.only(top: 16),
                   child: Text(
                     _errorMessage!,
-                    style: GoogleFonts.poppins(
-                      color: Theme.of(context).highlightColor,
-                    ),
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ),
             ],

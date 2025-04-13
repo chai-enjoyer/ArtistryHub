@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../providers/post_provider.dart';
 import '../widgets/post_card.dart';
@@ -17,32 +16,36 @@ class FeedPage extends StatelessWidget {
       appBar: AppBar(
         title: Text(
           'ArtistryHub',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w800),
+          style: Theme.of(context).textTheme.headlineMedium,
         ),
-        // actions: [
-        //   Padding(
-        //     padding: const EdgeInsets.only(right: 16.0),
-        //     child: Badge(
-        //       label: const Text('8'), // Example streak count
-        //       backgroundColor: Theme.of(context).highlightColor, 
-        //       textColor: Colors.black,
-        //       child: IconButton(
-        //         icon: const Icon(Icons.star, size: 28),
-        //         color: Theme.of(context).highlightColor,
-        //         onPressed: () {
-        //           ScaffoldMessenger.of(context).showSnackBar(
-        //             const SnackBar(content: Text('Share Streak: 3 days! Keep sharing!')),
-        //           );
-        //         },
-        //       ),
-        //     ),
-        //   ),
-        // ],
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              Navigator.pushNamed(context, '/search');
+            },
+          ),
+        ],
       ),
       body: Consumer<PostProvider>(
         builder: (context, provider, child) {
           if (provider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return ListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              itemCount: 5,
+              itemBuilder: (context, index) => AnimatedOpacity(
+                opacity: 0.3,
+                duration: const Duration(milliseconds: 300),
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).hintColor,
+                    borderRadius: const BorderRadius.all(Radius.circular(4)),
+                  ),
+                ),
+              ),
+            );
           }
           if (provider.error != null) {
             return Center(
@@ -51,14 +54,12 @@ class FeedPage extends StatelessWidget {
                 children: [
                   Text(
                     'Error: ${provider.error}',
-                    style: GoogleFonts.poppins(),
+                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
-                  ElevatedButton(
+                  const SizedBox(height: 16),
+                  OutlinedButton(
                     onPressed: () => provider.fetchPosts(),
-                    child: Text(
-                      'Retry',
-                      style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
-                    ),
+                    child: const Text('Retry'),
                   ),
                 ],
               ),
@@ -67,19 +68,23 @@ class FeedPage extends StatelessWidget {
           if (provider.posts.isEmpty) {
             return Center(
               child: Text(
-                'No posts yet. Share something!',
-                style: GoogleFonts.poppins(),
+                'No posts yet.',
+                style: Theme.of(context).textTheme.bodyLarge,
               ),
             );
           }
           return RefreshIndicator(
             onRefresh: () => provider.fetchPosts(),
             child: ListView.builder(
-              padding: const EdgeInsets.symmetric(vertical: 16.0),
+              padding: const EdgeInsets.symmetric(vertical: 8),
               itemCount: provider.posts.length,
               itemBuilder: (context, index) {
                 final post = provider.posts[index];
-                return PostCard(post: post);
+                return AnimatedSlide(
+                  offset: Offset(0, index * 0.05),
+                  duration: Duration(milliseconds: 300 + index * 100),
+                  child: PostCard(post: post),
+                );
               },
             ),
           );

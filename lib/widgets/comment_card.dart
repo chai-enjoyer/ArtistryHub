@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:just_audio/just_audio.dart';
 import '../models/comment.dart';
 import '../utils/audio_utils.dart';
@@ -12,56 +11,45 @@ class CommentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: Theme.of(context).cardColor,
-      //margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-
-                    child: Icon(Icons.person)
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  comment.username,
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              comment.content,
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                color: Theme.of(context).primaryColor,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const CircleAvatar(
+                child: Icon(Icons.person),
               ),
-            ),
-            if (comment.musicSnippetUrl != null) ...[
-              const SizedBox(height: 8),
-              _MusicPlayer(
-                filePath: comment.musicSnippetUrl!,
-                title: comment.musicTitle ?? 'Music Snippet',
-                artist: comment.musicArtist ?? 'Unknown Artist',
-                coverPath: comment.musicCoverUrl,
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  comment.username,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
               ),
             ],
-            const SizedBox(height: 8),
-            Text(
-              AudioUtils.formatTimestamp(comment.timestamp),
-              style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            comment.content,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          if (comment.musicSnippetUrl != null) ...[
+            const SizedBox(height: 12),
+            _MusicPlayer(
+              filePath: comment.musicSnippetUrl!,
+              title: comment.musicTitle ?? 'Music Snippet',
+              artist: comment.musicArtist ?? 'Unknown Artist',
+              coverPath: comment.musicCoverUrl,
             ),
-            const Divider(),
-          ], 
-        ),
+          ],
+          const SizedBox(height: 8),
+          Text(
+            AudioUtils.formatTimestamp(comment.timestamp),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
       ),
     );
   }
@@ -116,7 +104,12 @@ class _MusicPlayerState extends State<_MusicPlayer> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error playing audio: $e')),
+        SnackBar(
+          content: Text(
+            'Error playing audio: $e',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ),
       );
     }
   }
@@ -126,84 +119,50 @@ class _MusicPlayerState extends State<_MusicPlayer> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Stack(
-          alignment: Alignment.center,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: widget.coverPath != null
-                  ? Image.file(
-                      File(widget.coverPath!),
-                      width: 48,
-                      height: 48,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Image.asset(
-                          'assets/song_cover_placeholder.png',
-                          width: 48,
-                          height: 48,
-                          fit: BoxFit.cover,
-                        );
-                      },
-                    )
-                  : Image.asset(
-                      'assets/song_cover_placeholder.png',
-                      width: 48,
-                      height: 48,
-                      fit: BoxFit.cover,
-                    ),
-            ),
-            MouseRegion(
-              child: GestureDetector(
-                onTap: _togglePlay,
-                child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 200),
-                  opacity: _isPlaying ? 1.0 : 0.0,
-                  child: Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Icon(
-                      _isPlaying ? Icons.pause : Icons.play_arrow,
-                      size: 48,
-                      color: Theme.of(context).cardColor,
-                    ),
-                  ),
-                ),
+        if (widget.coverPath != null)
+          ClipRRect(
+            borderRadius: const BorderRadius.all(Radius.circular(4)),
+            child: Image.file(
+              File(widget.coverPath!),
+              width: 40,
+              height: 40,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => const Icon(
+                Icons.music_note,
+                size: 64,
               ),
             ),
-          ],
-        ),
-        const SizedBox(width: 8),
+          )
+        else
+          const Icon(
+            Icons.music_note,
+            size: 64,
+          ),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 widget.title ?? 'Music Snippet',
-                style: GoogleFonts.poppins(
-                  color: Theme.of(context).primaryColor,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-                maxLines: 1,
+                style: Theme.of(context).textTheme.bodyLarge,
                 overflow: TextOverflow.ellipsis,
               ),
               if (widget.artist != null)
                 Text(
                   widget.artist!,
-                  style: GoogleFonts.poppins(
-                    color: Theme.of(context).primaryColor.withOpacity(0.7),
-                    fontSize: 10,
-                  ),
-                  maxLines: 1,
+                  style: Theme.of(context).textTheme.bodyMedium,
                   overflow: TextOverflow.ellipsis,
                 ),
             ],
           ),
+        ),
+        IconButton(
+          icon: Icon(
+            _isPlaying ? Icons.pause : Icons.play_arrow,
+            size: 32,
+          ),
+          onPressed: _togglePlay,
         ),
       ],
     );

@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
@@ -55,7 +54,7 @@ class _DetailedPostPageState extends State<DetailedPostPage> {
       try {
         String? finalAudioPath;
         AudioMetadata? metadata;
-        
+
         if (_audioFilePath != null) {
           final appDir = await getApplicationDocumentsDirectory();
           final fileName = _audioFilePath!.split('/').last;
@@ -63,8 +62,7 @@ class _DetailedPostPageState extends State<DetailedPostPage> {
           await Directory('${appDir.path}/music_snippets').create(recursive: true);
           await File(_audioFilePath!).copy(newPath);
           finalAudioPath = newPath;
-          
-          // Extract metadata from the audio file
+
           metadata = await AudioUtils.extractMetadata(newPath);
         }
 
@@ -104,84 +102,93 @@ class _DetailedPostPageState extends State<DetailedPostPage> {
       appBar: AppBar(
         title: Text(
           'Post Details',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+          style: Theme.of(context).textTheme.headlineMedium,
         ),
       ),
       body: Consumer<PostProvider>(
         builder: (context, provider, child) {
-          final comments = widget.post.id != null 
+          final comments = widget.post.id != null
               ? provider.getCommentsForPost(widget.post.id!)
               : <Comment>[];
           return Column(
             children: [
-              // Post details
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.post.username,
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 18,
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const CircleAvatar(
+                                  child: Icon(Icons.person),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  widget.post.username,
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              widget.post.content,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                            if (widget.post.musicSnippetUrl != null) ...[
+                              const SizedBox(height: 12),
+                              _MusicPlayer(
+                                filePath: widget.post.musicSnippetUrl!,
+                                title: widget.post.musicTitle ?? 'Music Snippet',
+                                artist: widget.post.musicArtist ?? 'Unknown Artist',
+                                coverPath: widget.post.musicCoverUrl,
+                              ),
+                            ],
+                            const SizedBox(height: 8),
+                            Text(
+                              AudioUtils.formatTimestamp(widget.post.timestamp),
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      widget.post.content,
-                      style: GoogleFonts.poppins(fontSize: 16),
-                    ),
-                    if (widget.post.musicSnippetUrl != null) ...[
-                      const SizedBox(height: 8),
-                      _MusicPlayer(
-                        filePath: widget.post.musicSnippetUrl!,
-                        title: widget.post.musicTitle ?? 'Music Snippet',
-                        artist: widget.post.musicArtist ?? 'Unknown Artist',
-                        coverPath: widget.post.musicCoverUrl,
+                      const Divider(),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Text(
+                          'Comments (${comments.length})',
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
                       ),
+                      comments.isEmpty
+                          ? Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Text(
+                                'No comments yet.',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                            )
+                          : ListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: comments.length,
+                              itemBuilder: (context, index) {
+                                return AnimatedSlide(
+                                  offset: Offset(0, index * 0.05),
+                                  duration:
+                                      Duration(milliseconds: 300 + index * 100),
+                                  child: CommentCard(comment: comments[index]),
+                                );
+                              },
+                            ),
                     ],
-                    const SizedBox(height: 8),
-                    Text(
-                      AudioUtils.formatTimestamp(widget.post.timestamp),
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
-                    ),
-                    
-                  ],
-                ),
-              ),
-              const Divider(),
-              // Comments header
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Text(
-                  'Comments (${comments.length})',
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
                   ),
                 ),
               ),
-              // Comments list
-              Expanded(
-                child: comments.isEmpty
-                    ? Center(
-                        child: Text(
-                          'No comments yet.',
-                          style: GoogleFonts.poppins(),
-                        ),
-                      )
-                    : ListView.builder(
-                        itemCount: comments.length,
-                        itemBuilder: (context, index) {
-                          return CommentCard(comment: comments[index]);
-                        },
-                      ),
-              ),
-              // Comment input
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
@@ -189,18 +196,18 @@ class _DetailedPostPageState extends State<DetailedPostPage> {
                     if (_errorMessage != null)
                       Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Colors.red),
+                        style: Theme.of(context).textTheme.bodySmall,
                       ),
                     if (_audioFilePath != null)
                       Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.only(bottom: 12),
                         child: Row(
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.audio_file,
-                              color: Theme.of(context).primaryColor,
+                              size: 32,
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 12),
                             Expanded(
                               child: FutureBuilder<AudioMetadata>(
                                 future: AudioUtils.extractMetadata(_audioFilePath!),
@@ -211,17 +218,12 @@ class _DetailedPostPageState extends State<DetailedPostPage> {
                                       children: [
                                         Text(
                                           snapshot.data!.title,
-                                          style: GoogleFonts.poppins(
-                                            fontWeight: FontWeight.w600,
-                                          ),
+                                          style: Theme.of(context).textTheme.bodyLarge,
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                         Text(
                                           snapshot.data!.artist,
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 12,
-                                            color: Theme.of(context).primaryColor.withOpacity(0.7),
-                                          ),
+                                          style: Theme.of(context).textTheme.bodyMedium,
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                       ],
@@ -229,14 +231,17 @@ class _DetailedPostPageState extends State<DetailedPostPage> {
                                   }
                                   return Text(
                                     _audioFilePath!.split('/').last,
-                                    style: GoogleFonts.poppins(),
+                                    style: Theme.of(context).textTheme.bodyLarge,
                                     overflow: TextOverflow.ellipsis,
                                   );
                                 },
                               ),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.close),
+                              icon: const Icon(
+                                Icons.close,
+                                size: 32,
+                              ),
                               onPressed: () {
                                 setState(() {
                                   _audioFilePath = null;
@@ -249,26 +254,25 @@ class _DetailedPostPageState extends State<DetailedPostPage> {
                     Row(
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.attach_file),
+                          icon: const Icon(
+                            Icons.attach_file,
+                            size: 32,
+                          ),
                           onPressed: _pickAudio,
                         ),
                         Expanded(
                           child: TextField(
                             controller: _commentController,
-                            decoration: InputDecoration(
+                            decoration: const InputDecoration(
                               hintText: 'Add a comment...',
-                              hintStyle: GoogleFonts.poppins(),
-                              border: const OutlineInputBorder(),
                             ),
+                            style: Theme.of(context).textTheme.bodyMedium,
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 12),
                         ElevatedButton(
                           onPressed: _addComment,
-                          child: Text(
-                            'Post',
-                            style: GoogleFonts.poppins(),
-                          ),
+                          child: const Text('Post'),
                         ),
                       ],
                     ),
@@ -332,7 +336,12 @@ class _MusicPlayerState extends State<_MusicPlayer> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error playing audio: $e')),
+        SnackBar(
+          content: Text(
+            'Error playing audio: $e',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ),
       );
     }
   }
@@ -342,57 +351,25 @@ class _MusicPlayerState extends State<_MusicPlayer> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Stack(
-          alignment: Alignment.center,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: widget.coverPath != null
-                  ? Image.file(
-                      File(widget.coverPath!),
-                      width: 80,
-                      height: 80,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Image.asset(
-                          'assets/song_cover_placeholder.png',
-                          width: 80,
-                          height: 80,
-                          fit: BoxFit.cover,
-                        );
-                      },
-                    )
-                  : Image.asset(
-                      'assets/song_cover_placeholder.png',
-                      width: 80,
-                      height: 80,
-                      fit: BoxFit.cover,
-                    ),
-            ),
-            MouseRegion(
-              child: GestureDetector(
-                onTap: _togglePlay,
-                child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 200),
-                  opacity: _isPlaying ? 1.0 : 0.0,
-                  child: Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Icon(
-                      _isPlaying ? Icons.pause : Icons.play_arrow,
-                      size: 80,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
+        if (widget.coverPath != null)
+          ClipRRect(
+            borderRadius: const BorderRadius.all(Radius.circular(4)),
+            child: Image.file(
+              File(widget.coverPath!),
+              width: 64,
+              height: 64,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => const Icon(
+                Icons.music_note,
+                size: 64,
               ),
             ),
-          ],
-        ),
+          )
+        else
+          const Icon(
+            Icons.music_note,
+            size: 64,
+          ),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -400,25 +377,23 @@ class _MusicPlayerState extends State<_MusicPlayer> {
             children: [
               Text(
                 widget.title,
-                style: GoogleFonts.poppins(
-                  color: Theme.of(context).primaryColor,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-                maxLines: 1,
+                style: Theme.of(context).textTheme.bodyLarge,
                 overflow: TextOverflow.ellipsis,
               ),
               Text(
                 widget.artist,
-                style: GoogleFonts.poppins(
-                  color: Theme.of(context).primaryColor.withOpacity(0.7),
-                  fontSize: 12,
-                ),
-                maxLines: 1,
+                style: Theme.of(context).textTheme.bodyMedium,
                 overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
+        ),
+        IconButton(
+          icon: Icon(
+            _isPlaying ? Icons.pause : Icons.play_arrow,
+            size: 32,
+          ),
+          onPressed: _togglePlay,
         ),
       ],
     );

@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:just_audio/just_audio.dart';
 import '../models/post.dart';
 import '../screens/detailed_post_page.dart';
@@ -13,74 +12,71 @@ class PostCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => DetailedPostPage(post: post),
-          ),
-        );
-      },
+    return Hero(
+      tag: 'post-${post.id}',
       child: Card(
-        color: Theme.of(context).cardColor,
-        margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  CircleAvatar(
-
-                    child: Icon(Icons.person)
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      post.username,
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                        color: Theme.of(context).primaryColor,
+        child: InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => DetailedPostPage(post: post),
+              ),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const CircleAvatar(
+                      child: Icon(Icons.person),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        post.username,
+                        style: Theme.of(context).textTheme.bodyLarge,
                       ),
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.share, size: 28),
-                    color: Theme.of(context).hintColor,
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Share feature coming soon!')),
-                      );
-                    },
+                    IconButton(
+                      icon: const Icon(Icons.share),
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Share feature coming soon!',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  post.content,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                if (post.musicSnippetUrl != null) ...[
+                  const SizedBox(height: 12),
+                  _MusicPlayer(
+                    filePath: post.musicSnippetUrl!,
+                    title: post.musicTitle,
+                    artist: post.musicArtist,
+                    coverPath: post.musicCoverUrl,
                   ),
                 ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                post.content,
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: Theme.of(context).primaryColor,
-                ),
-              ),
-              if (post.musicSnippetUrl != null) ...[
-                const SizedBox(height: 12),
-                _MusicPlayer(
-                  filePath: post.musicSnippetUrl!,
-                  title: post.musicTitle,
-                  artist: post.musicArtist,
-                  coverPath: post.musicCoverUrl,
+                const SizedBox(height: 8),
+                Text(
+                  AudioUtils.formatTimestamp(post.timestamp),
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
-              const SizedBox(height: 12),
-              Text(
-                AudioUtils.formatTimestamp(post.timestamp),
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -137,7 +133,12 @@ class _MusicPlayerState extends State<_MusicPlayer> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error playing audio: $e')),
+        SnackBar(
+          content: Text(
+            'Error playing audio: $e',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ),
       );
     }
   }
@@ -147,84 +148,50 @@ class _MusicPlayerState extends State<_MusicPlayer> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Stack(
-          alignment: Alignment.center,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: widget.coverPath != null
-                  ? Image.file(
-                      File(widget.coverPath!),
-                      width: 60,
-                      height: 60,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Image.asset(
-                          'assets/song_cover_placeholder.png',
-                          width: 60,
-                          height: 60,
-                          fit: BoxFit.cover,
-                        );
-                      },
-                    )
-                  : Image.asset(
-                      'assets/song_cover_placeholder.png',
-                      width: 60,
-                      height: 60,
-                      fit: BoxFit.cover,
-                    ),
-            ),
-            MouseRegion(
-              child: GestureDetector(
-                onTap: _togglePlay,
-                child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 200),
-                  opacity: _isPlaying ? 1.0 : 0.0,
-                  child: Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Icon(
-                      _isPlaying ? Icons.pause : Icons.play_arrow,
-                      size: 60,
-                      color: Theme.of(context).cardColor,
-                    ),
-                  ),
-                ),
+        if (widget.coverPath != null)
+          ClipRRect(
+            borderRadius: const BorderRadius.all(Radius.circular(4)),
+            child: Image.file(
+              File(widget.coverPath!),
+              width: 64,
+              height: 64,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => const Icon(
+                Icons.music_note,
+                size: 64,
               ),
             ),
-          ],
-        ),
-        const SizedBox(width: 8),
+          )
+        else
+          const Icon(
+            Icons.music_note,
+            size: 64,
+          ),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 widget.title ?? 'Music Snippet',
-                style: GoogleFonts.poppins(
-                  color: Theme.of(context).primaryColor,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-                maxLines: 1,
+                style: Theme.of(context).textTheme.bodyLarge,
                 overflow: TextOverflow.ellipsis,
               ),
               if (widget.artist != null)
                 Text(
                   widget.artist!,
-                  style: GoogleFonts.poppins(
-                    color: Theme.of(context).primaryColor.withOpacity(0.7),
-                    fontSize: 12,
-                  ),
-                  maxLines: 1,
+                  style: Theme.of(context).textTheme.bodyMedium,
                   overflow: TextOverflow.ellipsis,
                 ),
             ],
           ),
+        ),
+        IconButton(
+          icon: Icon(
+            _isPlaying ? Icons.pause : Icons.play_arrow,
+            size: 32,
+          ),
+          onPressed: _togglePlay,
         ),
       ],
     );
