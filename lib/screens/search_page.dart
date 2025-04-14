@@ -74,7 +74,7 @@ class _SearchPageState extends State<SearchPage> {
                 suffixIcon: Icon(Icons.search),
               ),
               style: Theme.of(context).textTheme.bodyMedium,
-              onChanged: _searchArtist, // Trigger search on text change
+              onChanged: _searchArtist,
               onSubmitted: (_) => _searchArtist(_searchController.text),
             ),
             const SizedBox(height: 16),
@@ -108,7 +108,7 @@ class _SearchPageState extends State<SearchPage> {
                   final artist = _results[index];
                   return AnimatedSlide(
                     offset: Offset(0, index * 0.05),
-                    duration: const Duration(milliseconds: 200), // Faster for real-time
+                    duration: const Duration(milliseconds: 200), 
                     child: ListTile(
                       leading: const Icon(Icons.person),
                       title: Text(

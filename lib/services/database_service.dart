@@ -55,7 +55,6 @@ class DatabaseService {
             ''');
           }
           if (oldVersion < 3) {
-            // Add new columns for music metadata
             await db.execute('''
               ALTER TABLE posts ADD COLUMN musicTitle TEXT;
               ALTER TABLE posts ADD COLUMN musicArtist TEXT;
@@ -122,7 +121,6 @@ class DatabaseService {
     }
   }
 
-  // Comment methods
   Future<void> insertComment(Comment comment) async {
     final db = await database;
     try {
