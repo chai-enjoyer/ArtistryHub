@@ -13,7 +13,7 @@ class MapViewPage extends StatefulWidget {
 class _MapViewPageState extends State<MapViewPage> {
   final MapController _mapController = MapController();
   final List<Marker> _markers = [];
-  LatLng _center = LatLng(40.7128, -74.0060); // Default: New York City
+  LatLng _center = LatLng(51.0909470, 71.4180072); //AITU
 
   @override
   void initState() {
