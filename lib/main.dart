@@ -5,8 +5,10 @@ import 'providers/theme_provider.dart';
 import 'screens/feed_page.dart';
 import 'screens/profile_page.dart';
 import 'screens/post_page.dart';
-import 'screens/settings_page.dart';
 import 'screens/search_page.dart';
+import 'screens/map_view_page.dart';
+import 'package:location/location.dart';
+import 'package:permission_handler/permission_handler.dart' as perm;
 
 void main() {
   runApp(
@@ -39,7 +41,7 @@ class ArtistryHubApp extends StatelessWidget {
             '/search': (context) => const SearchPage(),
             '/post': (context) => const PostPage(),
             '/profile': (context) => const ProfilePage(),
-            '/settings': (context) => const SettingsPage(),
+            '/map': (context) => const MapViewPage(),
           },
         );
       },
@@ -61,7 +63,7 @@ class _MainScreenState extends State<MainScreen> {
     const SearchPage(),
     const PostPage(),
     const ProfilePage(),
-    const SettingsPage(),
+    const MapViewPage(),
   ];
 
   void _onItemTapped(int index) {
@@ -118,9 +120,9 @@ class _MainScreenState extends State<MainScreen> {
           _buildDestination(
             context,
             index: 4,
-            icon: Icons.settings_outlined,
-            selectedIcon: Icons.settings,
-            label: 'Settings',
+            icon: Icons.map_outlined,
+            selectedIcon: Icons.map,
+            label: 'Map',
           ),
         ],
       ),
@@ -141,47 +143,52 @@ class _MainScreenState extends State<MainScreen> {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
           decoration: BoxDecoration(
             color: isSelected
-                ? theme.navigationBarTheme.surfaceTintColor
+                ? theme.navigationBarTheme.surfaceTintColor?.withOpacity(0.1)
                 : Colors.transparent,
-            borderRadius: const BorderRadius.all(Radius.circular(4)),
+            borderRadius: const BorderRadius.all(Radius.circular(8)),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.all(Radius.circular(4)),
-                child: Icon(
-                  isSelected ? selectedIcon : icon,
-                  size: isSelected ? 32 : 28,
-                  color: isSelected
-                      ? theme.navigationBarTheme.iconTheme!
-                          .resolve({MaterialState.selected})!.color
-                      : theme.navigationBarTheme.iconTheme!
-                          .resolve({})!.color,
+          child: AnimatedScale(
+            scale: isSelected ? 1.1 : 1.0,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.all(Radius.circular(4)),
+                  child: Icon(
+                    isSelected ? selectedIcon : icon,
+                    size: isSelected ? 32 : 28,
+                    color: isSelected
+                        ? theme.navigationBarTheme.iconTheme!
+                            .resolve({WidgetState.selected})!.color
+                        : theme.navigationBarTheme.iconTheme!
+                            .resolve({})!.color,
+                  ),
                 ),
-              ),
-              AnimatedOpacity(
-                opacity: isSelected ? 1.0 : 0.5,
-                duration: const Duration(milliseconds: 200),
-                child: Text(
-                  label,
+                AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 300),
                   style: isSelected
                       ? theme.navigationBarTheme.labelTextStyle!
-                          .resolve({MaterialState.selected})
-                      : theme.navigationBarTheme.labelTextStyle!.resolve({}),
+                          .resolve({WidgetState.selected})!
+                      : theme.navigationBarTheme.labelTextStyle!
+                          .resolve({})!,
+                  child: Text(label),
                 ),
-              ),
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                height: 2,
-                width: isSelected ? 24 : 0,
-                color: isSelected ? theme.primaryColor : Colors.transparent,
-                margin: const EdgeInsets.only(top: 2),
-              ),
-            ],
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                  height: 2,
+                  width: isSelected ? 32 : 0,
+                  color: isSelected ? theme.primaryColor : Colors.transparent,
+                  margin: const EdgeInsets.only(top: 4),
+                ),
+              ],
+            ),
           ),
         ),
       ),

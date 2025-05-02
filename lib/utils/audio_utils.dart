@@ -24,13 +24,13 @@ class AudioUtils {
       String artist = tag?.trackArtist ?? 'Unknown Artist';
       String? coverPath;
 
-      if (tag?.pictures != null && tag!.pictures!.isNotEmpty) {
+      if (tag?.pictures != null && tag!.pictures.isNotEmpty) {
         final appDir = await getApplicationDocumentsDirectory();
         final coverDir = Directory('${appDir.path}/covers');
         await coverDir.create(recursive: true);
         
         final coverFile = File('${coverDir.path}/${path.basenameWithoutExtension(filePath)}_cover.jpg');
-        await coverFile.writeAsBytes(tag.pictures!.first.bytes);
+        await coverFile.writeAsBytes(tag.pictures.first.bytes);
         coverPath = coverFile.path;
       }
 

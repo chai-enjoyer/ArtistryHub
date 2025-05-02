@@ -14,6 +14,14 @@ class ProfilePage extends StatelessWidget {
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             pinned: true,
+            actions: [
+            IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: () {
+                  Navigator.pushNamed(context, '/settings');
+                },
+              ),
+            ],
           ),
           SliverToBoxAdapter(
             child: Padding(

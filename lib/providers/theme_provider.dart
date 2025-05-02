@@ -75,18 +75,18 @@ class ThemeProvider with ChangeNotifier {
         navigationBarTheme: NavigationBarThemeData(
           backgroundColor: const Color(0xFFFFFFFF),
           surfaceTintColor: const Color(0xFFE0E0E0),
-          iconTheme: MaterialStateProperty.resolveWith(
+          iconTheme: WidgetStateProperty.resolveWith(
             (states) => IconThemeData(
               color: const Color(0xFF000000),
-              size: states.contains(MaterialState.selected) ? 32 : 28,
+              size: states.contains(WidgetState.selected) ? 32 : 28,
             ),
           ),
-          labelTextStyle: MaterialStateProperty.resolveWith(
+          labelTextStyle: WidgetStateProperty.resolveWith(
             (states) => TextStyle(
               fontFamily: 'Roboto',
               fontWeight: FontWeight.w800,
               fontSize: 12,
-              color: states.contains(MaterialState.selected)
+              color: states.contains(WidgetState.selected)
                   ? const Color(0xFF000000)
                   : const Color(0xFF757575).withOpacity(0.5),
             ),
@@ -212,18 +212,18 @@ class ThemeProvider with ChangeNotifier {
         navigationBarTheme: NavigationBarThemeData(
           backgroundColor: const Color(0xFF212121),
           surfaceTintColor: const Color(0xFF424242),
-          iconTheme: MaterialStateProperty.resolveWith(
+          iconTheme: WidgetStateProperty.resolveWith(
             (states) => IconThemeData(
               color: const Color(0xFFFFFFFF),
-              size: states.contains(MaterialState.selected) ? 32 : 28,
+              size: states.contains(WidgetState.selected) ? 32 : 28,
             ),
           ),
-          labelTextStyle: MaterialStateProperty.resolveWith(
+          labelTextStyle: WidgetStateProperty.resolveWith(
             (states) => TextStyle(
               fontFamily: 'Roboto',
               fontWeight: FontWeight.w800,
               fontSize: 12,
-              color: states.contains(MaterialState.selected)
+              color: states.contains(WidgetState.selected)
                   ? const Color(0xFFFFFFFF)
                   : const Color(0xFFB0BEC5).withOpacity(0.5),
             ),
