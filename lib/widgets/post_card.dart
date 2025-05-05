@@ -31,9 +31,13 @@ class PostCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const CircleAvatar(
-                      child: Icon(Icons.person),
-                    ),
+                    post.userPhotoUrl != null && post.userPhotoUrl!.isNotEmpty
+                        ? CircleAvatar(
+                            backgroundImage: NetworkImage(post.userPhotoUrl!),
+                          )
+                        : const CircleAvatar(
+                            child: Icon(Icons.person),
+                          ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -148,24 +152,44 @@ class _MusicPlayerState extends State<_MusicPlayer> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        if (widget.coverPath != null)
-          ClipRRect(
-            borderRadius: const BorderRadius.all(Radius.circular(4)),
-            child: Image.file(
-              File(widget.coverPath!),
-              width: 64,
-              height: 64,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => const Icon(
-                Icons.music_note,
-                size: 64,
-              ),
-            ),
-          )
+        if (widget.coverPath != null && widget.coverPath!.isNotEmpty)
+          widget.coverPath!.startsWith('http')
+              ? ClipRRect(
+                  borderRadius: const BorderRadius.all(Radius.circular(4)),
+                  child: Image.network(
+                    widget.coverPath!,
+                    width: 64,
+                    height: 64,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Image.asset(
+                      'assets/song_cover_placeholder.png',
+                      width: 64,
+                      height: 64,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                )
+              : ClipRRect(
+                  borderRadius: const BorderRadius.all(Radius.circular(4)),
+                  child: Image.file(
+                    File(widget.coverPath!),
+                    width: 64,
+                    height: 64,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Image.asset(
+                      'assets/song_cover_placeholder.png',
+                      width: 64,
+                      height: 64,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                )
         else
-          const Icon(
-            Icons.music_note,
-            size: 64,
+          Image.asset(
+            'assets/song_cover_placeholder.png',
+            width: 64,
+            height: 64,
+            fit: BoxFit.cover,
           ),
         const SizedBox(width: 12),
         Expanded(

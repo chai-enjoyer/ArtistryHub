@@ -1,21 +1,27 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/post_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/auth_provider.dart';
 import 'screens/feed_page.dart';
 import 'screens/profile_page.dart';
 import 'screens/post_page.dart';
 import 'screens/search_page.dart';
 import 'screens/map_view_page.dart';
-import 'package:location/location.dart';
-import 'package:permission_handler/permission_handler.dart' as perm;
+import 'screens/login_page.dart';
+import 'screens/settings_page.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => PostProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
       ],
       child: const ArtistryHubApp(),
     ),
@@ -27,14 +33,14 @@ class ArtistryHubApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, child) {
         return MaterialApp(
           title: 'ArtistryHub',
-          theme: themeProvider.isDarkMode
-              ? themeProvider.darkTheme
-              : themeProvider.lightTheme,
-          home: const MainScreen(),
+          theme: Provider.of<ThemeProvider>(context).isDarkMode
+              ? Provider.of<ThemeProvider>(context).darkTheme
+              : Provider.of<ThemeProvider>(context).lightTheme,
+          home: authProvider.user == null ? const LoginPage() : const MainScreen(),
           debugShowCheckedModeBanner: false,
           routes: {
             '/feed': (context) => const FeedPage(),
@@ -42,6 +48,8 @@ class ArtistryHubApp extends StatelessWidget {
             '/post': (context) => const PostPage(),
             '/profile': (context) => const ProfilePage(),
             '/map': (context) => const MapViewPage(),
+            '/login': (context) => const LoginPage(),
+            '/settings': (context) => const SettingsPage(),
           },
         );
       },

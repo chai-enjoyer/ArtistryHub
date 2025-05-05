@@ -1,6 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../services/api_service.dart';
+import '../providers/post_provider.dart';
+import '../models/post.dart';
+import 'detailed_post_page.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -12,7 +16,8 @@ class SearchPage extends StatefulWidget {
 class _SearchPageState extends State<SearchPage> {
   final _searchController = TextEditingController();
   final ApiService _apiService = ApiService();
-  List<dynamic> _results = [];
+  List<dynamic> _artistResults = [];
+  List<Post> _postResults = [];
   bool _isLoading = false;
   String? _error;
   Timer? _debounce;
@@ -24,12 +29,13 @@ class _SearchPageState extends State<SearchPage> {
     super.dispose();
   }
 
-  void _searchArtist(String query) {
+  void _search(String query) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 500), () async {
       if (query.isEmpty) {
         setState(() {
-          _results = [];
+          _artistResults = [];
+          _postResults = [];
           _isLoading = false;
           _error = null;
         });
@@ -40,9 +46,16 @@ class _SearchPageState extends State<SearchPage> {
         _error = null;
       });
       try {
-        final result = await _apiService.searchArtist(query);
+        final artistResult = await _apiService.searchArtist(query);
+        final postProvider = Provider.of<PostProvider>(context, listen: false);
+        final postResults = postProvider.posts
+            .where((post) =>
+                post.content.toLowerCase().contains(query.toLowerCase()) ||
+                post.username.toLowerCase().contains(query.toLowerCase()))
+            .toList();
         setState(() {
-          _results = result['results']['artistmatches']['artist'];
+          _artistResults = artistResult['results']['artistmatches']['artist'];
+          _postResults = postResults;
           _isLoading = false;
         });
       } catch (e) {
@@ -70,12 +83,12 @@ class _SearchPageState extends State<SearchPage> {
             TextField(
               controller: _searchController,
               decoration: const InputDecoration(
-                hintText: 'Search artists...',
+                hintText: 'Search artists or posts...',
                 suffixIcon: Icon(Icons.search),
               ),
               style: Theme.of(context).textTheme.bodyMedium,
-              onChanged: _searchArtist,
-              onSubmitted: (_) => _searchArtist(_searchController.text),
+              onChanged: _search,
+              onSubmitted: (_) => _search(_searchController.text),
             ),
             const SizedBox(height: 16),
             if (_isLoading)
@@ -102,26 +115,69 @@ class _SearchPageState extends State<SearchPage> {
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             Expanded(
-              child: ListView.builder(
-                itemCount: _results.length,
-                itemBuilder: (context, index) {
-                  final artist = _results[index];
-                  return AnimatedSlide(
-                    offset: Offset(0, index * 0.05),
-                    duration: const Duration(milliseconds: 200), 
-                    child: ListTile(
-                      leading: const Icon(Icons.person),
-                      title: Text(
-                        artist['name'],
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
-                      subtitle: Text(
-                        'Listeners: ${artist['listeners']}',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
+              child: ListView(
+                children: [
+                  if (_artistResults.isNotEmpty) ...[
+                    Text(
+                      'Artists',
+                      style: Theme.of(context).textTheme.headlineSmall,
                     ),
-                  );
-                },
+                    ..._artistResults.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final artist = entry.value;
+                      return AnimatedSlide(
+                        offset: Offset(0, index * 0.05),
+                        duration: const Duration(milliseconds: 200),
+                        child: ListTile(
+                          leading: const Icon(Icons.person),
+                          title: Text(
+                            artist['name'],
+                            style: Theme.of(context).textTheme.bodyLarge,
+                          ),
+                          subtitle: Text(
+                            'Listeners: ${artist['listeners']}',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ),
+                      );
+                    }),
+                  ],
+                  if (_postResults.isNotEmpty) ...[
+                    Text(
+                      'Posts',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    ..._postResults.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final post = entry.value;
+                      return AnimatedSlide(
+                        offset: Offset(0, index * 0.05),
+                        duration: const Duration(milliseconds: 200),
+                        child: ListTile(
+                          leading: const Icon(Icons.post_add),
+                          title: Text(
+                            post.content,
+                            style: Theme.of(context).textTheme.bodyLarge,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          subtitle: Text(
+                            'By ${post.username}',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => DetailedPostPage(post: post),
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    }),
+                  ],
+                ],
               ),
             ),
           ],

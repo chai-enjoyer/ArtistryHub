@@ -3,8 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/post.dart';
+import '../models/user_profile.dart';
 import '../providers/post_provider.dart';
+import '../providers/auth_provider.dart';
 import '../utils/audio_utils.dart';
 
 class PostPage extends StatefulWidget {
@@ -18,7 +21,6 @@ class _PostPageState extends State<PostPage> {
   final _contentController = TextEditingController();
   String? _errorMessage;
   String? _selectedFilePath;
-  String? _fileName;
   AudioMetadata? _audioMetadata;
 
   @override
@@ -45,7 +47,6 @@ class _PostPageState extends State<PostPage> {
 
         setState(() {
           _selectedFilePath = newPath;
-          _fileName = fileName;
           _audioMetadata = metadata;
           _errorMessage = null;
         });
@@ -69,21 +70,39 @@ class _PostPageState extends State<PostPage> {
         _errorMessage = null;
       });
       try {
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final user = authProvider.user;
+        if (user == null) {
+          setState(() {
+            _errorMessage = 'User not logged in.';
+          });
+          return;
+        }
+        // Fetch user profile from Firestore
+        final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        String displayName = user.displayName ?? user.email ?? 'anonymous';
+        if (doc.exists) {
+          final profile = UserProfile.fromFirestore(doc);
+          if (profile.displayName != null && profile.displayName!.isNotEmpty) {
+            displayName = profile.displayName!;
+          }
+        }
         final post = Post(
           id: DateTime.now().toIso8601String(),
-          username: 'user',
+          username: displayName,
+          userPhotoUrl: user.photoURL,
           content: _contentController.text,
           musicSnippetUrl: _selectedFilePath,
           musicTitle: _audioMetadata?.title,
           musicArtist: _audioMetadata?.artist,
           musicCoverUrl: _audioMetadata?.coverPath,
           timestamp: DateTime.now(),
+          userId: user.uid, // Add userId for filtering
         );
         await Provider.of<PostProvider>(context, listen: false).insertPost(post);
         _contentController.clear();
         setState(() {
           _selectedFilePath = null;
-          _fileName = null;
           _audioMetadata = null;
         });
         ScaffoldMessenger.of(context).showSnackBar(
@@ -151,7 +170,6 @@ class _PostPageState extends State<PostPage> {
                           onPressed: () {
                             setState(() {
                               _selectedFilePath = null;
-                              _fileName = null;
                               _audioMetadata = null;
                             });
                           },

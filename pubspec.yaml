@@ -45,12 +45,16 @@ dependencies:
   flutter_map: ^6.1.0
   latlong2: ^0.9.0
   location: ^5.0.3
-
+  firebase_core: ^2.24.2
+  firebase_auth: ^4.15.3
+  google_sign_in: ^6.1.6
+  cloud_firestore: ^4.13.6
   flutter_native_splash: ^2.4.1
-
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  firebase_storage: ^11.5.6
+  image_picker: ^1.0.7
+  url_launcher: ^6.2.4
+  image_cropper: ^9.1.0
 
 dev_dependencies:
   flutter_test:
@@ -97,6 +101,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/song_cover_placeholder.png
+    - assets/auth_config.json
     # - assets/icon/splash_logo.png
     # - assets/icon/splash_logo_dark.png
     # - assets/fonts/

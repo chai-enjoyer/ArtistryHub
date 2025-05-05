@@ -1,12 +1,12 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../models/post.dart';
 import '../models/comment.dart';
-import '../services/database_service.dart';
 
 class PostProvider with ChangeNotifier {
-  final DatabaseService _dbService = DatabaseService();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   List<Post> _posts = [];
-  List<Comment> _comments = [];
+  final List<Comment> _comments = [];
   bool _isLoading = false;
   String? _error;
 
@@ -18,64 +18,67 @@ class PostProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
-      _posts = await _dbService.getPosts();
-      _comments = await _dbService.getAllComments();
-      _error = null;
-      print('Fetched ${_posts.length} posts, ${_comments.length} comments');
+      final snapshot = await _firestore.collection('posts').limit(100).get();
+      _posts = snapshot.docs.map((doc) => Post.fromJson(doc.data())).toList();
+      // Always sort by timestamp descending
+      _posts.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      _isLoading = false;
+      notifyListeners();
     } catch (e) {
       _error = e.toString();
-      print('Error fetching data: $e');
-    }
-    _isLoading = false;
-    notifyListeners();
-  }
-
-  Future<void> insertPost(Post post) async {
-    try {
-      await _dbService.insertPost(post);
-      print('Post added: ${post.content}');
-      await fetchPosts();
-    } catch (e) {
-      print('Error adding post: $e');
-      throw Exception('Failed to add post: $e');
-    } finally {
+      _isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<void> updatePost(Post post) async {
+  Future<void> insertPost(Post post) async {
     try {
-      await _dbService.updatePost(post);
-      await fetchPosts();
+      await _firestore.collection('posts').doc(post.id).set(post.toJson());
+      _posts.add(post);
+      // Keep posts sorted by newest first
+      _posts.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      notifyListeners();
     } catch (e) {
-      print('Error updating post: $e');
-      throw Exception('Failed to update post: $e');
-    }
-  }
-
-  Future<void> deletePost(String id) async {
-    try {
-      await _dbService.deletePost(id);
-      await fetchPosts();
-    } catch (e) {
-      print('Error deleting post: $e');
-      throw Exception('Failed to delete post: $e');
+      _error = e.toString();
+      notifyListeners();
     }
   }
 
   Future<void> addComment(Comment comment) async {
     try {
-      await _dbService.insertComment(comment);
-      print('Comment added: ${comment.content}');
-      _comments = await _dbService.getAllComments();
+      await _firestore.collection('comments').doc(comment.id).set(comment.toJson());
+      _comments.add(comment);
       notifyListeners();
     } catch (e) {
-      print('Error adding comment: $e');
-      throw Exception('Failed to add comment: $e');
+      _error = e.toString();
+      notifyListeners();
     }
   }
 
-  List<Comment> getCommentsForPost(String postId) {
-    return _comments.where((comment) => comment.postId == postId).toList();
+  Future<List<Comment>> getCommentsForPost(String postId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('comments')
+          .where('postId', isEqualTo: postId)
+          .limit(50)
+          .get();
+      return snapshot.docs.map((doc) => Comment.fromJson(doc.data())).toList();
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return [];
+    }
+  }
+
+  void sortPostsByTimestamp({bool ascending = true}) {
+    _posts.sort((a, b) => ascending
+        ? a.timestamp.compareTo(b.timestamp)
+        : b.timestamp.compareTo(a.timestamp));
+    notifyListeners();
+  }
+
+  void sortPostsByUsername() {
+    _posts.sort((a, b) => a.username.compareTo(b.username));
+    notifyListeners();
   }
 }

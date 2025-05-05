@@ -1,0 +1,11 @@
+{
+    "client_id": "079bfdc2-bad0-4fc7-b27b-4c8a3976beaa",
+    "authorization_user_agent": "DEFAULT",
+    "redirect_uri": "msauth://com.example.artistry_hub/5xob5lHBctemdN1UJQErIyNFJy4",
+    "authorities": [
+      {
+        "type": "AAD",
+        "authority_url": "https://login.microsoftonline.com/158f15f3-83e0-4906-824c-69bdc50d9d61"
+      }
+    ]
+  }

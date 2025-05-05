@@ -6,9 +6,12 @@ import 'package:file_picker/file_picker.dart';
 import '../models/post.dart';
 import '../models/comment.dart';
 import '../providers/post_provider.dart';
+import '../providers/auth_provider.dart';
 import '../widgets/comment_card.dart';
 import '../utils/audio_utils.dart';
 import 'package:path_provider/path_provider.dart';
+import '../models/user_profile.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DetailedPostPage extends StatefulWidget {
   final Post post;
@@ -66,10 +69,28 @@ class _DetailedPostPageState extends State<DetailedPostPage> {
           metadata = await AudioUtils.extractMetadata(newPath);
         }
 
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final user = authProvider.user;
+        if (user == null) {
+          setState(() {
+            _errorMessage = 'User not logged in.';
+          });
+          return;
+        }
+        // Fetch user profile from Firestore
+        final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        String displayName = user.displayName ?? user.email ?? 'anonymous';
+        if (doc.exists) {
+          final profile = UserProfile.fromFirestore(doc);
+          if (profile.displayName != null && profile.displayName!.isNotEmpty) {
+            displayName = profile.displayName!;
+          }
+        }
         final comment = Comment(
           id: DateTime.now().toIso8601String(),
           postId: widget.post.id!,
-          username: 'user',
+          username: displayName,
+          userPhotoUrl: user.photoURL,
           content: _commentController.text,
           timestamp: DateTime.now(),
           musicSnippetUrl: finalAudioPath,
@@ -105,11 +126,14 @@ class _DetailedPostPageState extends State<DetailedPostPage> {
           style: Theme.of(context).textTheme.headlineMedium,
         ),
       ),
-      body: Consumer<PostProvider>(
-        builder: (context, provider, child) {
-          final comments = widget.post.id != null
-              ? provider.getCommentsForPost(widget.post.id!)
-              : <Comment>[];
+      body: FutureBuilder<List<Comment>>(
+        future: Provider.of<PostProvider>(context, listen: false)
+            .getCommentsForPost(widget.post.id!),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final comments = snapshot.data ?? [];
           return Column(
             children: [
               Expanded(
@@ -124,9 +148,13 @@ class _DetailedPostPageState extends State<DetailedPostPage> {
                           children: [
                             Row(
                               children: [
-                                const CircleAvatar(
-                                  child: Icon(Icons.person),
-                                ),
+                                widget.post.userPhotoUrl != null && widget.post.userPhotoUrl!.isNotEmpty
+                                    ? CircleAvatar(
+                                        backgroundImage: NetworkImage(widget.post.userPhotoUrl!),
+                                      )
+                                    : const CircleAvatar(
+                                        child: Icon(Icons.person),
+                                      ),
                                 const SizedBox(width: 8),
                                 Text(
                                   widget.post.username,

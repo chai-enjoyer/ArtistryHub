@@ -10,6 +10,8 @@ class FeedPage extends StatelessWidget {
   Widget build(BuildContext context) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<PostProvider>(context, listen: false).fetchPosts();
+      // Always sort posts by newest first after fetching
+      Provider.of<PostProvider>(context, listen: false).sortPostsByTimestamp(ascending: false);
     });
 
     return Scaffold(
@@ -24,6 +26,32 @@ class FeedPage extends StatelessWidget {
             onPressed: () {
               Navigator.pushNamed(context, '/search');
             },
+          ),
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              final provider = Provider.of<PostProvider>(context, listen: false);
+              if (value == 'time_asc') {
+                provider.sortPostsByTimestamp(ascending: true);
+              } else if (value == 'time_desc') {
+                provider.sortPostsByTimestamp(ascending: false);
+              } else if (value == 'username') {
+                provider.sortPostsByUsername();
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'time_asc',
+                child: Text('Sort by Time (Ascending)'),
+              ),
+              const PopupMenuItem(
+                value: 'time_desc',
+                child: Text('Sort by Time (Descending)'),
+              ),
+              const PopupMenuItem(
+                value: 'username',
+                child: Text('Sort by Username'),
+              ),
+            ],
           ),
         ],
       ),
