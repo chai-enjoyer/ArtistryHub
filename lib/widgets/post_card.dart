@@ -1,21 +1,33 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/post.dart';
 import '../screens/detailed_post_page.dart';
 import '../utils/audio_utils.dart';
 
 class PostCard extends StatelessWidget {
   final Post post;
+  final bool sharpStyle;
 
-  const PostCard({super.key, required this.post});
+  const PostCard({super.key, required this.post, this.sharpStyle = true});
 
   @override
   Widget build(BuildContext context) {
-    return Hero(
-      tag: 'post-${post.id}',
-      child: Card(
+    final safeUsername = post.username.isNotEmpty ? post.username : 'Unknown';
+    final safeContent = post.content.isNotEmpty ? post.content : '[No content]';
+    final safeTimestamp = post.timestamp;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    return AnimatedSlide(
+      offset: const Offset(0, 0.08),
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeOut,
+      child: AnimatedOpacity(
+        opacity: 1.0,
+        duration: const Duration(milliseconds: 400),
         child: InkWell(
+          borderRadius: BorderRadius.zero,
           onTap: () {
             Navigator.push(
               context,
@@ -24,67 +36,126 @@ class PostCard extends StatelessWidget {
               ),
             );
           },
-          child: Padding(
-            padding: const EdgeInsets.all(12.0),
+          highlightColor: Colors.black.withOpacity(0.03),
+          splashColor: Colors.black.withOpacity(0.04),
+          child: Container(
+            margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 12), // Add horizontal margin
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 0),
+            decoration: const BoxDecoration(
+              color: Colors.transparent,
+              border: Border(bottom: BorderSide(color: Colors.black12, width: 1)),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    post.userPhotoUrl != null && post.userPhotoUrl!.isNotEmpty
-                        ? CircleAvatar(
-                            backgroundImage: NetworkImage(post.userPhotoUrl!),
-                          )
-                        : const CircleAvatar(
-                            child: Icon(Icons.person),
-                          ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        post.username,
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.share),
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Share feature coming soon!',
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                          ),
-                        );
+                    FutureBuilder<String?>(
+                      future: post.userId != null ? _getUserPhotoUrl(post.userId!) : Future.value(null),
+                      builder: (context, snapshot) {
+                        final photoUrl = snapshot.data;
+                        if (photoUrl != null && photoUrl.isNotEmpty) {
+                          return CircleAvatar(
+                            backgroundImage: NetworkImage(photoUrl),
+                            radius: 20,
+                            backgroundColor: Colors.black12,
+                          );
+                        } else {
+                          return CircleAvatar(
+                            radius: 20,
+                            backgroundColor: Colors.black12,
+                            child: Icon(Icons.person, size: 20, color: Colors.black),
+                          );
+                        }
                       },
                     ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            safeUsername,
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: isDark ? Colors.white : Colors.black,
+                              fontSize: 17,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            safeContent,
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: isDark ? Colors.white : Colors.black,
+                              fontWeight: FontWeight.w400,
+                              fontSize: 15,
+                            ),
+                            maxLines: 4,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.more_vert, color: isDark ? Colors.white54 : Colors.black54, size: 20),
                   ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  post.content,
-                  style: Theme.of(context).textTheme.bodyMedium,
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(Icons.access_time, size: 13, color: Colors.black38),
+                    Text(
+                      '  ${AudioUtils.formatTimestamp(safeTimestamp)}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: Colors.black38,
+                        fontWeight: FontWeight.w400,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const Spacer(),
+                    AnimatedScale(
+                      scale: 1.0,
+                      duration: const Duration(milliseconds: 200),
+                      child: IconButton(
+                        icon: Icon(Icons.favorite_border, color: Colors.red, size: 24),
+                        onPressed: () {
+                          // TODO: Add like animation logic
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(Icons.chat_bubble_outline, size: 16, color: Colors.black54),
+                  ],
                 ),
-                if (post.musicSnippetUrl != null) ...[
-                  const SizedBox(height: 12),
-                  _MusicPlayer(
-                    filePath: post.musicSnippetUrl!,
-                    title: post.musicTitle,
-                    artist: post.musicArtist,
-                    coverPath: post.musicCoverUrl,
+                if (post.musicSnippetUrl != null && post.musicSnippetUrl!.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: _MusicPlayer(
+                      filePath: post.musicSnippetUrl!,
+                      title: post.musicTitle ?? 'Music Snippet',
+                      artist: post.musicArtist ?? 'Unknown Artist',
+                      coverPath: post.musicCoverUrl,
+                    ),
                   ),
-                ],
-                const SizedBox(height: 8),
-                Text(
-                  AudioUtils.formatTimestamp(post.timestamp),
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
               ],
             ),
           ),
         ),
       ),
     );
+  }
+
+  Future<String?> _getUserPhotoUrl(String userId) async {
+    // Fetch user photo URL from Firestore by userId
+    try {
+      final doc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+      if (doc.exists && doc.data() != null) {
+        return doc.data()!['photoURL'] as String?;
+      }
+    } catch (_) {}
+    return null;
   }
 }
 

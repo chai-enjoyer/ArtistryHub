@@ -30,43 +30,34 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  sqflite: ^2.3.3
-  provider: ^6.1.2
-  http: ^1.2.2
-  path_provider: ^2.1.4
-  path: ^1.9.0
-  google_fonts: ^6.2.1
-  file_picker: ^8.1.2
-  just_audio: ^0.9.39
-  permission_handler: ^11.3.1
-  shared_preferences: ^2.3.2
-  audiotags: ^1.4.4
-  intl: ^0.19.0
-  flutter_map: ^6.1.0
-  latlong2: ^0.9.0
-  location: ^5.0.3
+  cupertino_icons: ^1.0.2
+  provider: ^6.0.5
   firebase_core: ^2.24.2
-  firebase_auth: ^4.15.3
-  google_sign_in: ^6.1.6
-  cloud_firestore: ^4.13.6
-  flutter_native_splash: ^2.4.1
-  cupertino_icons: ^1.0.8
-  firebase_storage: ^11.5.6
+  firebase_auth: ^4.16.0
+  cloud_firestore: ^4.15.8
+  google_sign_in: ^6.2.1
+  google_fonts: ^6.2.1
+  lottie: ^3.1.0
+  just_audio: ^0.9.36
+  file_picker: ^10.1.7
+  path_provider: ^2.1.2
   image_picker: ^1.0.7
-  url_launcher: ^6.2.4
   image_cropper: ^9.1.0
+  url_launcher: ^6.2.6
+  supabase_flutter: ^2.5.2
+  shared_preferences: ^2.2.2
+  intl: ^0.19.0
+  google_maps_flutter: ^2.6.0
+  geolocator: ^11.0.0
+  flutter_media_metadata: ^1.0.0 # Added for audio metadata extraction
+  sqflite: ^2.3.3
+  # audiotagger: removed due to v1 embedding issues
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
-  # The "flutter_lints" package below contains a set of recommended lints to
-  # encourage good coding practices. The lint set provided by the package is
-  # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
-  flutter_lints: ^5.0.0
   flutter_launcher_icons: ^0.14.3
+  flutter_lints: ^5.0.0
   
 flutter_icons:
   android: true
@@ -102,6 +93,7 @@ flutter:
   assets:
     - assets/song_cover_placeholder.png
     - assets/auth_config.json
+    - assets/lottie/loading_music.json
     # - assets/icon/splash_logo.png
     # - assets/icon/splash_logo_dark.png
     # - assets/fonts/

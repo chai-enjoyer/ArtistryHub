@@ -1,61 +1,125 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/comment.dart';
 import '../utils/audio_utils.dart';
 
 class CommentCard extends StatelessWidget {
   final Comment comment;
+  final bool sharpStyle;
 
-  const CommentCard({super.key, required this.comment});
+  const CommentCard({super.key, required this.comment, this.sharpStyle = true});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    return AnimatedSlide(
+      offset: const Offset(0, 0.08),
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeOut,
+      child: AnimatedOpacity(
+        opacity: 1.0,
+        duration: const Duration(milliseconds: 400),
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 12), // Add horizontal margin
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
+          decoration: const BoxDecoration(
+            color: Colors.transparent,
+            border: Border(bottom: BorderSide(color: Colors.black12, width: 1)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              comment.userPhotoUrl != null && comment.userPhotoUrl!.isNotEmpty
-                  ? CircleAvatar(
-                      backgroundImage: NetworkImage(comment.userPhotoUrl!),
-                    )
-                  : const CircleAvatar(
-                      child: Icon(Icons.person),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  FutureBuilder<String?>(
+                    future: _getUserPhotoUrl(comment.id),
+                    builder: (context, snapshot) {
+                      final photoUrl = snapshot.data;
+                      if (photoUrl != null && photoUrl.isNotEmpty) {
+                        return CircleAvatar(
+                          backgroundImage: NetworkImage(photoUrl),
+                          radius: 16,
+                          backgroundColor: Colors.black12,
+                        );
+                      } else {
+                        return CircleAvatar(
+                          radius: 16,
+                          backgroundColor: Colors.black12,
+                          child: Icon(Icons.person, size: 16, color: Colors.black),
+                        );
+                      }
+                    },
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          comment.username.isNotEmpty ? comment.username : 'Unknown',
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white : Colors.black,
+                            fontSize: 15,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          comment.content.isNotEmpty ? comment.content : '[No comment]',
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            color: isDark ? Colors.white : Colors.black,
+                            fontWeight: FontWeight.w400,
+                            fontSize: 14,
+                          ),
+                          maxLines: 4,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  comment.username,
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
+                  ),
+                  Icon(Icons.access_time, size: 13, color: Colors.black38),
+                  Text(
+                    '  ${AudioUtils.formatTimestamp(comment.timestamp)}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: Colors.black38,
+                      fontWeight: FontWeight.w400,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
               ),
+              if (comment.musicSnippetUrl != null && comment.musicSnippetUrl!.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: _MusicPlayer(
+                    filePath: comment.musicSnippetUrl!,
+                    title: comment.musicTitle ?? 'Music Snippet',
+                    artist: comment.musicArtist ?? 'Unknown Artist',
+                    coverPath: comment.musicCoverUrl,
+                  ),
+                ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            comment.content,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          if (comment.musicSnippetUrl != null) ...[
-            const SizedBox(height: 12),
-            _MusicPlayer(
-              filePath: comment.musicSnippetUrl!,
-              title: comment.musicTitle ?? 'Music Snippet',
-              artist: comment.musicArtist ?? 'Unknown Artist',
-              coverPath: comment.musicCoverUrl,
-            ),
-          ],
-          const SizedBox(height: 8),
-          Text(
-            AudioUtils.formatTimestamp(comment.timestamp),
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-        ],
+        ),
       ),
     );
+  }
+
+  Future<String?> _getUserPhotoUrl(String userId) async {
+    // Fetch user photo URL from Firestore by userId
+    try {
+      final doc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+      if (doc.exists && doc.data() != null) {
+        return doc.data()!['photoURL'] as String?;
+      }
+    } catch (_) {}
+    return null;
   }
 }
 

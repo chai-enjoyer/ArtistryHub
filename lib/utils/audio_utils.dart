@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:audiotags/audiotags.dart';
+import 'package:flutter_media_metadata/flutter_media_metadata.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'package:intl/intl.dart';
@@ -19,18 +19,17 @@ class AudioMetadata {
 class AudioUtils {
   static Future<AudioMetadata> extractMetadata(String filePath) async {
     try {
-      final tag = await AudioTags.read(filePath);
-      String title = tag?.title ?? path.basename(filePath);
-      String artist = tag?.trackArtist ?? 'Unknown Artist';
+      final metadata = await MetadataRetriever.fromFile(File(filePath));
+      String title = metadata.trackName ?? path.basename(filePath);
+      String artist = metadata.trackArtistNames?.join(', ') ?? 'Unknown Artist';
       String? coverPath;
 
-      if (tag?.pictures != null && tag!.pictures.isNotEmpty) {
+      if (metadata.albumArt != null && metadata.albumArt!.isNotEmpty) {
         final appDir = await getApplicationDocumentsDirectory();
         final coverDir = Directory('${appDir.path}/covers');
         await coverDir.create(recursive: true);
-        
         final coverFile = File('${coverDir.path}/${path.basenameWithoutExtension(filePath)}_cover.jpg');
-        await coverFile.writeAsBytes(tag.pictures.first.bytes);
+        await coverFile.writeAsBytes(metadata.albumArt!);
         coverPath = coverFile.path;
       }
 
@@ -64,4 +63,4 @@ class AudioUtils {
       return DateFormat('MMM d, y').format(timestamp);
     }
   }
-} 
+}

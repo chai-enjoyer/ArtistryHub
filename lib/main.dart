@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'providers/post_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/auth_provider.dart';
@@ -12,10 +13,15 @@ import 'screens/search_page.dart';
 import 'screens/map_view_page.dart';
 import 'screens/login_page.dart';
 import 'screens/settings_page.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await Supabase.initialize(
+    url: 'https://sazlrtzirvbmuesbfxez.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNhemxydHppcnZibXVlc2JmeGV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY0NjI5ODQsImV4cCI6MjA2MjAzODk4NH0.rnoWfWhEDTHVuPIGz3cnBlrTosas612tQThgZQHz_s0',
+  );
   runApp(
     MultiProvider(
       providers: [
@@ -33,23 +39,69 @@ class ArtistryHubApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AuthProvider>(
-      builder: (context, authProvider, child) {
+    return Consumer2<AuthProvider, ThemeProvider>(
+      builder: (context, authProvider, themeProvider, child) {
         return MaterialApp(
           title: 'ArtistryHub',
-          theme: Provider.of<ThemeProvider>(context).isDarkMode
-              ? Provider.of<ThemeProvider>(context).darkTheme
-              : Provider.of<ThemeProvider>(context).lightTheme,
+          theme: themeProvider.lightTheme.copyWith(
+            textTheme: GoogleFonts.montserratTextTheme(themeProvider.lightTheme.textTheme),
+          ),
+          darkTheme: themeProvider.darkTheme.copyWith(
+            textTheme: GoogleFonts.montserratTextTheme(themeProvider.darkTheme.textTheme),
+          ),
+          themeMode: themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
           home: authProvider.user == null ? const LoginPage() : const MainScreen(),
           debugShowCheckedModeBanner: false,
-          routes: {
-            '/feed': (context) => const FeedPage(),
-            '/search': (context) => const SearchPage(),
-            '/post': (context) => const PostPage(),
-            '/profile': (context) => const ProfilePage(),
-            '/map': (context) => const MapViewPage(),
-            '/login': (context) => const LoginPage(),
-            '/settings': (context) => const SettingsPage(),
+          onGenerateRoute: (settings) {
+            WidgetBuilder builder;
+            switch (settings.name) {
+              case '/feed':
+                builder = (context) => const FeedPage();
+                break;
+              case '/search':
+                builder = (context) => const SearchPage();
+                break;
+              case '/post':
+                builder = (context) => const PostPage();
+                break;
+              case '/profile':
+                builder = (context) => const ProfilePage();
+                break;
+              case '/map':
+                builder = (context) => const MapViewPage();
+                break;
+              case '/login':
+                builder = (context) => const LoginPage();
+                break;
+              case '/settings':
+                builder = (context) => const SettingsPage();
+                break;
+              default:
+                builder = (context) => const FeedPage();
+            }
+            // Alternate between slide and fade transitions
+            if (settings.name == '/search' || settings.name == '/settings') {
+              // Fade transition
+              return PageRouteBuilder(
+                pageBuilder: (context, animation, secondaryAnimation) => builder(context),
+                transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+                settings: settings,
+              );
+            } else {
+              // Slide transition
+              return PageRouteBuilder(
+                pageBuilder: (context, animation, secondaryAnimation) => builder(context),
+                transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                  const begin = Offset(1.0, 0.0);
+                  const end = Offset.zero;
+                  final tween = Tween(begin: begin, end: end).chain(CurveTween(curve: Curves.easeInOut));
+                  return SlideTransition(position: animation.drive(tween), child: child);
+                },
+                settings: settings,
+              );
+            }
           },
         );
       },
@@ -82,7 +134,6 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Scaffold(
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 300),
@@ -172,19 +223,19 @@ class _MainScreenState extends State<MainScreen> {
                     isSelected ? selectedIcon : icon,
                     size: isSelected ? 32 : 28,
                     color: isSelected
-                        ? theme.navigationBarTheme.iconTheme!
-                            .resolve({WidgetState.selected})!.color
-                        : theme.navigationBarTheme.iconTheme!
-                            .resolve({})!.color,
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
                 AnimatedDefaultTextStyle(
                   duration: const Duration(milliseconds: 300),
                   style: isSelected
-                      ? theme.navigationBarTheme.labelTextStyle!
-                          .resolve({WidgetState.selected})!
-                      : theme.navigationBarTheme.labelTextStyle!
-                          .resolve({})!,
+                      ? (theme.navigationBarTheme.labelTextStyle?.resolve({WidgetState.selected}) ??
+                          theme.textTheme.labelMedium ??
+                          const TextStyle())
+                      : (theme.navigationBarTheme.labelTextStyle?.resolve({}) ??
+                          theme.textTheme.labelMedium ??
+                          const TextStyle()),
                   child: Text(label),
                 ),
                 AnimatedContainer(

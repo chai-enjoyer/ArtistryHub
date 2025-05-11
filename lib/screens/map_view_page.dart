@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
-import 'package:location/location.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
+import 'package:geolocator/geolocator.dart';
+import 'package:lottie/lottie.dart';
 
 class MapViewPage extends StatefulWidget {
   const MapViewPage({super.key});
@@ -11,40 +11,93 @@ class MapViewPage extends StatefulWidget {
 }
 
 class _MapViewPageState extends State<MapViewPage> {
-  final MapController _mapController = MapController();
-  final List<Marker> _markers = [];
-  LatLng _center = LatLng(51.0909470, 71.4180072); //AITU
+  gmaps.LatLng? _currentLatLng;
+  bool _loading = true;
+  String? _error;
+  final Set<gmaps.Marker> _markers = {};
+  int _markerIdCounter = 0;
+// _mapController is only used in onMapCreated, so suppress the warning for now.
+// ignore: unused_field
+  gmaps.GoogleMapController? _mapController;
 
   @override
   void initState() {
     super.initState();
-    _getUserLocation();
+    _getLocation();
+    _addDefaultAstanaMarkers();
   }
 
-  Future<void> _getUserLocation() async {
-    final location = Location();
-    final hasPermission = await location.requestPermission();
-    if (hasPermission == PermissionStatus.granted) {
-      final loc = await location.getLocation();
+  Future<void> _getLocation() async {
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          setState(() {
+            _error = 'Location permission denied.';
+            _loading = false;
+          });
+          return;
+        }
+      }
+      if (permission == LocationPermission.deniedForever) {
+        setState(() {
+          _error = 'Location permissions are permanently denied.';
+          _loading = false;
+        });
+        return;
+      }
+      final position = await Geolocator.getCurrentPosition();
       setState(() {
-        _center = LatLng(loc.latitude!, loc.longitude!);
+        _currentLatLng = gmaps.LatLng(position.latitude, position.longitude);
+        _loading = false;
         _markers.add(
-          Marker(
-            point: _center,
-            child: const Icon(Icons.person_pin_circle, color: Colors.red, size: 40),
+          gmaps.Marker(
+            markerId: const gmaps.MarkerId('me'),
+            position: _currentLatLng!,
+            infoWindow: const gmaps.InfoWindow(title: 'You are here'),
+            icon: gmaps.BitmapDescriptor.defaultMarkerWithHue(gmaps.BitmapDescriptor.hueAzure),
           ),
         );
       });
-      _mapController.move(_center, 15);
+    } catch (e) {
+      setState(() {
+        _error = 'Failed to get location: $e';
+        _loading = false;
+      });
     }
   }
 
-  void _addMarker(LatLng point) {
+  void _addDefaultAstanaMarkers() {
+    // Astana coordinates for 3 locations
+    final List<gmaps.LatLng> astanaLocations = [
+      gmaps.LatLng(51.1694, 71.4491), // Baiterek Tower
+      gmaps.LatLng(51.1280, 71.4304), // Khan Shatyr
+      gmaps.LatLng(51.0907, 71.4187), // Expo 2017
+    ];
+    final List<String> titles = [
+      'Baiterek Tower',
+      'Khan Shatyr',
+      'Expo 2017',
+    ];
+    for (int i = 0; i < astanaLocations.length; i++) {
+      _markers.add(
+        gmaps.Marker(
+          markerId: gmaps.MarkerId('astana_$i'),
+          position: astanaLocations[i],
+          infoWindow: gmaps.InfoWindow(title: titles[i]),
+        ),
+      );
+    }
+  }
+
+  void _addMarker(gmaps.LatLng position) {
     setState(() {
       _markers.add(
-        Marker(
-          point: point,
-          child: const Icon(Icons.location_on, color: Colors.blue, size: 36),
+        gmaps.Marker(
+          markerId: gmaps.MarkerId('custom_${_markerIdCounter++}'),
+          position: position,
+          infoWindow: const gmaps.InfoWindow(title: 'Custom Marker'),
         ),
       );
     });
@@ -52,36 +105,41 @@ class _MapViewPageState extends State<MapViewPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Map View'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.my_location),
-            onPressed: _getUserLocation,
-          ),
-        ],
-      ),
-      body: FlutterMap(
-        mapController: _mapController,
-        options: MapOptions(
-          center: _center,
-          zoom: 12,
-          onTap: (tapPosition, point) => _addMarker(point),
+        backgroundColor: theme.scaffoldBackgroundColor,
+        elevation: 0.5,
+        title: Text(
+          'Map',
+          style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900, fontSize: 26),
         ),
-        children: [
-          TileLayer(
-            urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-            subdomains: const ['a', 'b', 'c'],
-            userAgentPackageName: 'com.example.artistry_hub',
-          ),
-          MarkerLayer(markers: _markers),
-        ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _getUserLocation,
-        child: const Icon(Icons.my_location),
-      ),
+      body: _loading
+          ? Center(
+              child: Lottie.asset(
+                'assets/lottie/loading_music.json',
+                width: 120,
+                height: 120,
+                fit: BoxFit.contain,
+                repeat: true,
+              ),
+            )
+          : _error != null
+              ? Center(child: Text(_error!))
+              : _currentLatLng == null
+                  ? const Center(child: Text('Location not available'))
+                  : gmaps.GoogleMap(
+                      initialCameraPosition: gmaps.CameraPosition(
+                        target: _currentLatLng!,
+                        zoom: 13,
+                      ),
+                      myLocationEnabled: true,
+                      myLocationButtonEnabled: true,
+                      markers: _markers,
+                      onMapCreated: (controller) => _mapController = controller,
+                      onLongPress: _addMarker,
+                    ),
     );
   }
 }

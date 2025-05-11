@@ -3,13 +3,13 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  audiotags
+  app_links
   cloud_firestore
   file_selector_windows
   firebase_auth
   firebase_core
-  firebase_storage
-  permission_handler_windows
+  flutter_media_metadata
+  geolocator_windows
   url_launcher_windows
 )
 

@@ -12,6 +12,7 @@ import '../utils/audio_utils.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/user_profile.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:lottie/lottie.dart';
 
 class DetailedPostPage extends StatefulWidget {
   final Post post;
@@ -80,17 +81,21 @@ class _DetailedPostPageState extends State<DetailedPostPage> {
         // Fetch user profile from Firestore
         final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
         String displayName = user.displayName ?? user.email ?? 'anonymous';
+        String? photoURL = user.photoURL;
         if (doc.exists) {
           final profile = UserProfile.fromFirestore(doc);
           if (profile.displayName != null && profile.displayName!.isNotEmpty) {
             displayName = profile.displayName!;
+          }
+          if (profile.photoURL != null && profile.photoURL!.isNotEmpty) {
+            photoURL = profile.photoURL;
           }
         }
         final comment = Comment(
           id: DateTime.now().toIso8601String(),
           postId: widget.post.id!,
           username: displayName,
-          userPhotoUrl: user.photoURL,
+          userPhotoUrl: photoURL,
           content: _commentController.text,
           timestamp: DateTime.now(),
           musicSnippetUrl: finalAudioPath,
@@ -117,13 +122,26 @@ class _DetailedPostPageState extends State<DetailedPostPage> {
     }
   }
 
+  Future<String?> _getUserPhotoUrl(String userId) async {
+    try {
+      final doc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+      if (doc.exists && doc.data() != null) {
+        return doc.data()!['photoURL'] as String?;
+      }
+    } catch (_) {}
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        elevation: 0.5,
         title: Text(
-          'Post Details',
-          style: Theme.of(context).textTheme.headlineMedium,
+          'Post',
+          style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900, fontSize: 26),
         ),
       ),
       body: FutureBuilder<List<Comment>>(
@@ -131,7 +149,15 @@ class _DetailedPostPageState extends State<DetailedPostPage> {
             .getCommentsForPost(widget.post.id!),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(
+              child: Lottie.asset(
+                'assets/lottie/loading_music.json',
+                width: 120,
+                height: 120,
+                fit: BoxFit.contain,
+                repeat: true,
+              ),
+            );
           }
           final comments = snapshot.data ?? [];
           return Column(
@@ -148,13 +174,27 @@ class _DetailedPostPageState extends State<DetailedPostPage> {
                           children: [
                             Row(
                               children: [
-                                widget.post.userPhotoUrl != null && widget.post.userPhotoUrl!.isNotEmpty
-                                    ? CircleAvatar(
-                                        backgroundImage: NetworkImage(widget.post.userPhotoUrl!),
+                                widget.post.userId != null
+                                    ? FutureBuilder<String?>(
+                                        future: _getUserPhotoUrl(widget.post.userId!),
+                                        builder: (context, snapshot) {
+                                          final photoUrl = snapshot.data;
+                                          if (photoUrl != null && photoUrl.isNotEmpty) {
+                                            return CircleAvatar(
+                                              backgroundImage: NetworkImage(photoUrl),
+                                            );
+                                          } else {
+                                            return const CircleAvatar(
+                                              child: Icon(Icons.person),
+                                            );
+                                          }
+                                        },
                                       )
-                                    : const CircleAvatar(
-                                        child: Icon(Icons.person),
-                                      ),
+                                    : (widget.post.userPhotoUrl != null && widget.post.userPhotoUrl!.isNotEmpty
+                                        ? CircleAvatar(
+                                            backgroundImage: NetworkImage(widget.post.userPhotoUrl!),
+                                          )
+                                        : const CircleAvatar(child: Icon(Icons.person))),
                                 const SizedBox(width: 8),
                                 Text(
                                   widget.post.username,

@@ -3,8 +3,9 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  audiotags
   file_selector_linux
+  flutter_media_metadata
+  gtk
   url_launcher_linux
 )
 
