@@ -32,26 +32,22 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.2
   provider: ^6.0.5
-  firebase_core: ^2.24.2
-  firebase_auth: ^4.16.0
-  cloud_firestore: ^4.15.8
-  google_sign_in: ^6.2.1
   google_fonts: ^6.2.1
-  lottie: ^3.1.0
-  just_audio: ^0.9.36
+  supabase_flutter: ^2.5.2
   file_picker: ^10.1.7
+  just_audio: ^0.9.36
+  lottie: ^3.1.0
   path_provider: ^2.1.2
+  flutter_media_metadata: ^1.0.0
+  geolocator: ^11.0.0
+  google_maps_flutter: ^2.6.0
+  intl: ^0.19.0
+  shared_preferences: ^2.2.2
   image_picker: ^1.0.7
   image_cropper: ^9.1.0
   url_launcher: ^6.2.6
-  supabase_flutter: ^2.5.2
-  shared_preferences: ^2.2.2
-  intl: ^0.19.0
-  google_maps_flutter: ^2.6.0
-  geolocator: ^11.0.0
-  flutter_media_metadata: ^1.0.0 # Added for audio metadata extraction
   sqflite: ^2.3.3
-  # audiotagger: removed due to v1 embedding issues
+  # Add any other non-Firebase dependencies here
 
 dev_dependencies:
   flutter_test:

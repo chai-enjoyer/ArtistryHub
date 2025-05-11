@@ -3,10 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:lottie/lottie.dart';
 import '../models/post.dart';
-import '../models/user_profile.dart';
 import '../providers/post_provider.dart';
 import '../providers/auth_provider.dart';
 import '../utils/audio_utils.dart';
@@ -79,19 +77,10 @@ class _PostPageState extends State<PostPage> {
           });
           return;
         }
-        // Fetch user profile from Firestore
-        final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        // TODO: Fetch user profile from Supabase
         String displayName = user.displayName ?? user.email ?? 'anonymous';
         String? photoURL = user.photoURL;
-        if (doc.exists) {
-          final profile = UserProfile.fromFirestore(doc);
-          if (profile.displayName != null && profile.displayName!.isNotEmpty) {
-            displayName = profile.displayName!;
-          }
-          if (profile.photoURL != null && profile.photoURL!.isNotEmpty) {
-            photoURL = profile.photoURL;
-          }
-        }
+        // TODO: Optionally fetch profile from Supabase and update displayName/photoURL
         final post = Post(
           id: DateTime.now().toIso8601String(),
           username: displayName,
@@ -102,16 +91,15 @@ class _PostPageState extends State<PostPage> {
           musicArtist: _audioMetadata?.artist,
           musicCoverUrl: _audioMetadata?.coverPath,
           timestamp: DateTime.now(),
-          userId: user.uid, // Add userId for filtering
+          userId: user.uid,
         );
         await Provider.of<PostProvider>(context, listen: false).insertPost(post);
         _contentController.clear();
         setState(() {
-          _selectedFilePath = null;
           _audioMetadata = null;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Post added successfully!')),
+          const SnackBar(content: Text('Post added!')),
         );
       } catch (e) {
         setState(() {

@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import '../providers/auth_provider.dart' as local_auth_provider;
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -15,7 +12,7 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   String? _errorMessage;
   String? _pendingEmail;
-  AuthCredential? _pendingCredential;
+  dynamic _pendingCredential;
 
   @override
   void dispose() {
@@ -26,7 +23,6 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<local_auth_provider.AuthProvider>(context);
     final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -60,7 +56,6 @@ class _LoginPageState extends State<LoginPage> {
                   TextField(
                     controller: _emailController,
                     decoration: const InputDecoration(
-                      labelText: 'Email',
                       prefixIcon: Icon(Icons.email_outlined),
                     ),
                     keyboardType: TextInputType.emailAddress,
@@ -69,47 +64,26 @@ class _LoginPageState extends State<LoginPage> {
                   TextField(
                     controller: _passwordController,
                     decoration: const InputDecoration(
-                      labelText: 'Password',
                       prefixIcon: Icon(Icons.lock_outline),
                     ),
                     obscureText: true,
                   ),
                   if (_errorMessage != null)
                     Padding(
-                      padding: const EdgeInsets.all(8.0),
+                      padding: const EdgeInsets.only(top: 8.0),
                       child: Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
                     ),
                   const SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: () async {
-                      try {
-                        await authProvider.signInWithEmail(
-                          _emailController.text,
-                          _passwordController.text,
-                        );
-                        Navigator.pushReplacementNamed(context, '/');
-                      } catch (e) {
-                        setState(() {
-                          _errorMessage = e.toString();
-                        });
-                      }
+                      // TODO: Use Supabase Auth for sign in
                     },
                     child: const Text('Sign In'),
                   ),
                   const SizedBox(height: 12),
                   OutlinedButton(
                     onPressed: () async {
-                      try {
-                        await authProvider.signUpWithEmail(
-                          _emailController.text,
-                          _passwordController.text,
-                        );
-                        Navigator.pushReplacementNamed(context, '/');
-                      } catch (e) {
-                        setState(() {
-                          _errorMessage = e.toString();
-                        });
-                      }
+                      // TODO: Use Supabase Auth for sign up
                     },
                     child: const Text('Sign Up'),
                   ),
@@ -117,105 +91,28 @@ class _LoginPageState extends State<LoginPage> {
                   Row(
                     children: [
                       Expanded(child: Divider(color: theme.dividerColor)),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Text('or', style: theme.textTheme.bodyMedium),
-                      ),
-                      Expanded(child: Divider(color: theme.dividerColor)),
                     ],
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton.icon(
                     icon: const Icon(Icons.g_mobiledata),
-                    label: const Text('Sign in with Google'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: theme.colorScheme.primary,
-                      elevation: 0,
-                      side: BorderSide(color: theme.colorScheme.primary),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                    ),
                     onPressed: () async {
-                      try {
-                        await authProvider.signInWithGoogle();
-                        Navigator.pushReplacementNamed(context, '/');
-                      } catch (e) {
-                        setState(() {
-                          _errorMessage = e.toString();
-                        });
-                      }
+                      // TODO: Use Supabase Auth for Google sign in
                     },
+                    label: const Text('Sign in with Google'),
                   ),
                   const SizedBox(height: 12),
                   ElevatedButton.icon(
                     icon: const Icon(Icons.code),
-                    label: const Text('Sign in with GitHub'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: theme.colorScheme.primary,
-                      elevation: 0,
-                      side: BorderSide(color: theme.colorScheme.primary),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                    ),
                     onPressed: () async {
-                      try {
-                        await authProvider.signInWithGitHub();
-                        Navigator.pushReplacementNamed(context, '/');
-                      } on FirebaseAuthException catch (e) {
-                        if (e.code == 'account-exists-with-different-credential') {
-                          setState(() {
-                            _errorMessage = e.message;
-                            _pendingEmail = e.email;
-                            _pendingCredential = e.credential;
-                          });
-                        } else {
-                          setState(() {
-                            _errorMessage = e.toString();
-                          });
-                        }
-                      } catch (e) {
-                        setState(() {
-                          _errorMessage = e.toString();
-                        });
-                      }
+                      // TODO: Use Supabase Auth for GitHub sign in
                     },
+                    label: const Text('Sign in with GitHub'),
                   ),
                   if (_pendingCredential != null && _pendingEmail != null)
-                    Column(
-                      children: [
-                        const SizedBox(height: 16),
-                        Text(
-                          'To link your GitHub account, sign in with your existing provider for $_pendingEmail.',
-                          style: const TextStyle(color: Colors.orange),
-                        ),
-                        ElevatedButton.icon(
-                          icon: const Icon(Icons.g_mobiledata),
-                          label: const Text('Sign in with Google to link'),
-                          onPressed: () async {
-                            try {
-                              await authProvider.signInWithGoogle();
-                              final user = authProvider.user;
-                              if (user != null && _pendingCredential != null) {
-                                await user.linkWithCredential(_pendingCredential!);
-                                setState(() {
-                                  _pendingCredential = null;
-                                  _pendingEmail = null;
-                                  _errorMessage = null;
-                                });
-                                Navigator.pushReplacementNamed(context, '/');
-                              }
-                            } catch (e) {
-                              setState(() {
-                                _errorMessage = 'Failed to link account: \\${e.toString()}';
-                              });
-                            }
-                          },
-                        ),
-                      ],
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16.0),
+                      child: Text('Pending credential for $_pendingEmail'),
                     ),
                 ],
               ),

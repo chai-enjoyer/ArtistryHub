@@ -1,10 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../models/post.dart';
 import '../models/comment.dart';
 
 class PostProvider with ChangeNotifier {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   List<Post> _posts = [];
   final List<Comment> _comments = [];
   bool _isLoading = false;
@@ -18,10 +16,7 @@ class PostProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
-      final snapshot = await _firestore.collection('posts').limit(100).get();
-      _posts = snapshot.docs.map((doc) => Post.fromJson(doc.data())).toList();
-      // Always sort by timestamp descending
-      _posts.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      // TODO: Fetch posts from Supabase
       _isLoading = false;
       notifyListeners();
     } catch (e) {
@@ -33,9 +28,8 @@ class PostProvider with ChangeNotifier {
 
   Future<void> insertPost(Post post) async {
     try {
-      await _firestore.collection('posts').doc(post.id).set(post.toJson());
+      // TODO: Insert post to Supabase
       _posts.add(post);
-      // Keep posts sorted by newest first
       _posts.sort((a, b) => b.timestamp.compareTo(a.timestamp));
       notifyListeners();
     } catch (e) {
@@ -46,7 +40,7 @@ class PostProvider with ChangeNotifier {
 
   Future<void> addComment(Comment comment) async {
     try {
-      await _firestore.collection('comments').doc(comment.id).set(comment.toJson());
+      // TODO: Add comment to Supabase
       _comments.add(comment);
       notifyListeners();
     } catch (e) {
@@ -57,12 +51,8 @@ class PostProvider with ChangeNotifier {
 
   Future<List<Comment>> getCommentsForPost(String postId) async {
     try {
-      final snapshot = await _firestore
-          .collection('comments')
-          .where('postId', isEqualTo: postId)
-          .limit(50)
-          .get();
-      return snapshot.docs.map((doc) => Comment.fromJson(doc.data())).toList();
+      // TODO: Fetch comments for post from Supabase
+      return [];
     } catch (e) {
       _error = e.toString();
       notifyListeners();

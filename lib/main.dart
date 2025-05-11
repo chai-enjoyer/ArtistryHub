@@ -1,5 +1,3 @@
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -17,7 +15,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await Supabase.initialize(
     url: 'https://sazlrtzirvbmuesbfxez.supabase.co',
     anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNhemxydHppcnZibXVlc2JmeGV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY0NjI5ODQsImV4cCI6MjA2MjAzODk4NH0.rnoWfWhEDTHVuPIGz3cnBlrTosas612tQThgZQHz_s0',
@@ -230,12 +227,8 @@ class _MainScreenState extends State<MainScreen> {
                 AnimatedDefaultTextStyle(
                   duration: const Duration(milliseconds: 300),
                   style: isSelected
-                      ? (theme.navigationBarTheme.labelTextStyle?.resolve({WidgetState.selected}) ??
-                          theme.textTheme.labelMedium ??
-                          const TextStyle())
-                      : (theme.navigationBarTheme.labelTextStyle?.resolve({}) ??
-                          theme.textTheme.labelMedium ??
-                          const TextStyle()),
+                      ? (theme.navigationBarTheme.labelTextStyle?.resolve({WidgetState.selected}) ?? theme.textTheme.labelMedium ?? const TextStyle())
+                      : (theme.navigationBarTheme.labelTextStyle?.resolve({}) ?? theme.textTheme.labelMedium ?? const TextStyle()),
                   child: Text(label),
                 ),
                 AnimatedContainer(
