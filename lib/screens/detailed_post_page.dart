@@ -10,6 +10,7 @@ import '../providers/auth_provider.dart';
 import '../widgets/comment_card.dart';
 import '../utils/audio_utils.dart';
 import 'package:lottie/lottie.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class DetailedPostPage extends StatefulWidget {
   final Post post;
@@ -65,7 +66,7 @@ class _DetailedPostPageState extends State<DetailedPostPage> {
           return;
         }
         // TODO: Fetch user profile from Supabase
-        String displayName = user.displayName ?? user.email ?? 'anonymous';
+        String displayName = user.displayName ?? 'anonymous';
         String? photoURL = user.photoURL;
         // TODO: Optionally fetch profile from Supabase and update displayName/photoURL
         final comment = Comment(
@@ -98,7 +99,11 @@ class _DetailedPostPageState extends State<DetailedPostPage> {
   }
 
   Future<String?> _getUserPhotoUrl(String userId) async {
-    // TODO: Fetch user photo URL from Supabase
+    try {
+      final supabase = Supabase.instance.client;
+      final res = await supabase.from('profiles').select('photo_url').eq('id', userId).single();
+      return res['photo_url'] as String?;
+    } catch (_) {}
     return null;
   }
 

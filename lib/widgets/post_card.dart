@@ -1,10 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/post.dart';
 import '../screens/detailed_post_page.dart';
 import '../utils/audio_utils.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class PostCard extends StatelessWidget {
   final Post post;
@@ -148,12 +148,10 @@ class PostCard extends StatelessWidget {
   }
 
   Future<String?> _getUserPhotoUrl(String userId) async {
-    // Fetch user photo URL from Firestore by userId
     try {
-      final doc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
-      if (doc.exists && doc.data() != null) {
-        return doc.data()!['photoURL'] as String?;
-      }
+      final supabase = Supabase.instance.client;
+      final res = await supabase.from('profiles').select('photo_url').eq('id', userId).single();
+      return res['photo_url'] as String?;
     } catch (_) {}
     return null;
   }

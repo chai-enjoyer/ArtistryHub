@@ -1,7 +1,7 @@
 {
     "client_id": "079bfdc2-bad0-4fc7-b27b-4c8a3976beaa",
     "authorization_user_agent": "DEFAULT",
-    "redirect_uri": "msauth://com.example.artistry_hub/5xob5lHBctemdN1UJQErIyNFJy4",
+    "redirect_uri": "msauth://com.artistryhub.app/5xob5lHBctemdN1UJQErIyNFJy4",
     "authorities": [
       {
         "type": "AAD",

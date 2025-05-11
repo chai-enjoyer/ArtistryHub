@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class UserProfile {
   final String uid;
   final String email;
@@ -9,6 +7,8 @@ class UserProfile {
   final int postCount;
   final int followerCount;
   final int followingCount;
+  final String? spotifyId;
+  final Map<String, dynamic>? metadata;
 
   UserProfile({
     required this.uid,
@@ -19,31 +19,37 @@ class UserProfile {
     this.postCount = 0,
     this.followerCount = 0,
     this.followingCount = 0,
+    this.spotifyId,
+    this.metadata,
   });
 
-  factory UserProfile.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  factory UserProfile.fromMap(Map<String, dynamic> map) {
     return UserProfile(
-      uid: doc.id,
-      email: data['email'] ?? '',
-      displayName: data['displayName'],
-      photoURL: data['photoURL'],
-      bio: data['bio'],
-      postCount: data['postCount'] ?? 0,
-      followerCount: data['followerCount'] ?? 0,
-      followingCount: data['followingCount'] ?? 0,
+      uid: map['id'] ?? map['uid'],
+      email: map['email'] ?? '',
+      displayName: map['display_name'],
+      photoURL: map['photo_url'],
+      bio: map['bio'],
+      postCount: map['post_count'] ?? 0,
+      followerCount: map['follower_count'] ?? 0,
+      followingCount: map['following_count'] ?? 0,
+      spotifyId: map['spotify_id'],
+      metadata: map['metadata'],
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
+      'id': uid,
       'email': email,
-      'displayName': displayName,
-      'photoURL': photoURL,
+      'display_name': displayName,
+      'photo_url': photoURL,
       'bio': bio,
-      'postCount': postCount,
-      'followerCount': followerCount,
-      'followingCount': followingCount,
+      'post_count': postCount,
+      'follower_count': followerCount,
+      'following_count': followingCount,
+      'spotify_id': spotifyId,
+      'metadata': metadata,
     };
   }
-} 
+}

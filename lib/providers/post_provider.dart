@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/post.dart';
 import '../models/comment.dart';
 
 class PostProvider with ChangeNotifier {
+  final SupabaseClient _supabase = Supabase.instance.client;
   List<Post> _posts = [];
-  final List<Comment> _comments = [];
   bool _isLoading = false;
   String? _error;
 
@@ -16,7 +17,8 @@ class PostProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
-      // TODO: Fetch posts from Supabase
+      final res = await _supabase.from('posts').select().order('timestamp', ascending: false);
+      _posts = (res as List).map((e) => Post.fromJson(e)).toList();
       _isLoading = false;
       notifyListeners();
     } catch (e) {
@@ -28,9 +30,9 @@ class PostProvider with ChangeNotifier {
 
   Future<void> insertPost(Post post) async {
     try {
-      // TODO: Insert post to Supabase
-      _posts.add(post);
-      _posts.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      final res = await _supabase.from('posts').insert(post.toJson()).select().single();
+      final newPost = Post.fromJson(res);
+      _posts.insert(0, newPost);
       notifyListeners();
     } catch (e) {
       _error = e.toString();
@@ -40,8 +42,7 @@ class PostProvider with ChangeNotifier {
 
   Future<void> addComment(Comment comment) async {
     try {
-      // TODO: Add comment to Supabase
-      _comments.add(comment);
+      await _supabase.from('comments').insert(comment.toJson());
       notifyListeners();
     } catch (e) {
       _error = e.toString();
@@ -51,8 +52,8 @@ class PostProvider with ChangeNotifier {
 
   Future<List<Comment>> getCommentsForPost(String postId) async {
     try {
-      // TODO: Fetch comments for post from Supabase
-      return [];
+      final res = await _supabase.from('comments').select().eq('post_id', postId).order('timestamp');
+      return (res as List).map((e) => Comment.fromJson(e)).toList();
     } catch (e) {
       _error = e.toString();
       notifyListeners();

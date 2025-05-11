@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:37460275644:android:374e3fecfa3311c9aafbb9",
         "android_client_info": {
-          "package_name": "com.example.artistry_hub"
+          "package_name": "com.artistryhub.app"
         }
       },
       "oauth_client": [
@@ -17,7 +17,7 @@
           "client_id": "37460275644-vm3hq2250j2lvqfiqrgolt723unh1lpa.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.artistry_hub",
+            "package_name": "com.artistryhub.app",
             "certificate_hash": "e71a1be651c172d7a674dd5425012b232345272e"
           }
         },
