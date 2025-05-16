@@ -9,6 +9,7 @@ class Comment {
   final String? musicArtist;
   final String? musicCoverUrl;
   final String? userPhotoUrl;
+  final int likeCount;
 
   Comment({
     required this.id,
@@ -21,6 +22,7 @@ class Comment {
     this.musicArtist,
     this.musicCoverUrl,
     this.userPhotoUrl,
+    this.likeCount = 0,
   });
 
   factory Comment.fromJson(Map<String, dynamic> json) {
@@ -35,6 +37,7 @@ class Comment {
       musicArtist: json['musicArtist'] as String?,
       musicCoverUrl: json['musicCoverUrl'] as String?,
       userPhotoUrl: json['userPhotoUrl'] as String?,
+      likeCount: json['like_count'] ?? 0,
     );
   }
 
@@ -50,6 +53,7 @@ class Comment {
       'musicArtist': musicArtist,
       'musicCoverUrl': musicCoverUrl,
       'userPhotoUrl': userPhotoUrl,
+      'like_count': likeCount,
     };
   }
 }

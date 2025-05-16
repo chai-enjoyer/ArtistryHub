@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 import '../models/user_profile.dart';
 import 'package:lottie/lottie.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -20,10 +23,16 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _loadUserProfile() async {
-    // TODO: Load user profile from Supabase
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    setState(() {
+      _userProfile = authProvider.user;
+      _isLoading = false;
+    });
   }
 
   void _editProfile() {
+    final displayNameController = TextEditingController(text: _userProfile?.displayName);
+    final bioController = TextEditingController(text: _userProfile?.bio);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -38,17 +47,31 @@ class _ProfilePageState extends State<ProfilePage> {
             children: [
               TextField(
                 decoration: const InputDecoration(labelText: 'Display Name'),
-                controller: TextEditingController(text: _userProfile?.displayName),
-                onChanged: (value) async {
-                  // TODO: Update display name in Supabase
-                },
+                controller: displayNameController,
               ),
               TextField(
                 decoration: const InputDecoration(labelText: 'Bio'),
-                controller: TextEditingController(text: _userProfile?.bio),
-                onChanged: (value) async {
-                  // TODO: Update bio in Supabase
+                controller: bioController,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () async {
+                  final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                  final user = authProvider.user;
+                  if (user != null) {
+                    final updates = {
+                      'display_name': displayNameController.text,
+                      'bio': bioController.text,
+                    };
+                    await Supabase.instance.client.from('profiles').update(updates).eq('id', user.uid);
+                    await authProvider.reloadUserProfile(user.uid);
+                    setState(() {
+                      _userProfile = authProvider.user;
+                    });
+                  }
+                  Navigator.pop(context);
                 },
+                child: const Text('Save'),
               ),
             ],
           ),
@@ -90,8 +113,32 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ],
       ),
-      body: Center(
-        child: Text('Profile content goes here.'),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            CircleAvatar(
+              radius: 48,
+              backgroundImage: _userProfile?.photoURL != null ? NetworkImage(_userProfile!.photoURL!) : null,
+              child: _userProfile?.photoURL == null ? const Icon(Icons.person, size: 48) : null,
+            ),
+            const SizedBox(height: 16),
+            Text(_userProfile?.displayName ?? _userProfile?.email ?? '', style: theme.textTheme.headlineSmall),
+            Text(_userProfile?.bio ?? '', style: theme.textTheme.bodyMedium),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Column(children: [Text('${_userProfile?.postCount ?? 0}'), const Text('Posts')]),
+                const SizedBox(width: 24),
+                Column(children: [Text('${_userProfile?.followerCount ?? 0}'), const Text('Followers')]),
+                const SizedBox(width: 24),
+                Column(children: [Text('${_userProfile?.followingCount ?? 0}'), const Text('Following')]),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

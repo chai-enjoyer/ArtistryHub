@@ -1,4 +1,4 @@
-package com.artistryhub.app
+package com.example.artistry_hub
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -2,19 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class SignUpPage extends StatefulWidget {
+  const SignUpPage({super.key});
 
   @override
-  _LoginPageState createState() => _LoginPageState();
+  State<SignUpPage> createState() => _SignUpPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _SignUpPageState extends State<SignUpPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   String? _errorMessage;
-  String? _pendingEmail;
-  dynamic _pendingCredential;
   bool _isLoading = false;
 
   @override
@@ -24,7 +22,7 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  Future<void> _signIn() async {
+  Future<void> _signUp() async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -40,16 +38,40 @@ class _LoginPageState extends State<LoginPage> {
     }
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      await authProvider.signInWithEmail(email, password);
+      await authProvider.signUpWithEmail(email, password);
       setState(() {
         _isLoading = false;
       });
-      // Optionally navigate to main screen if needed
+      // Optionally navigate to sign in or main screen
     } catch (e) {
       setState(() {
         _errorMessage = e.toString();
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _signUpWithSpotify() async {
+    setState(() => _isLoading = true);
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      await authProvider.signInWithSpotify();
+    } catch (e) {
+      setState(() => _errorMessage = e.toString());
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _signUpWithGoogle() async {
+    setState(() => _isLoading = true);
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      await authProvider.signInWithGoogle();
+    } catch (e) {
+      setState(() => _errorMessage = e.toString());
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
@@ -80,7 +102,7 @@ class _LoginPageState extends State<LoginPage> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'Sign In',
+                    'Sign Up',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
                   ),
@@ -107,17 +129,34 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                   ElevatedButton(
-                    onPressed: _isLoading ? null : _signIn,
+                    onPressed: _isLoading ? null : _signUp,
                     child: _isLoading
                         ? const SizedBox(
                             width: 24,
                             height: 24,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('Sign In'),
+                        : const Text('Sign Up'),
                   ),
                   const SizedBox(height: 12),
-                  // Optionally add sign up or OAuth buttons here
+                  OutlinedButton(
+                    onPressed: _isLoading
+                        ? null
+                        : () => Navigator.pushReplacementNamed(context, '/signin'),
+                    child: const Text('Already have an account? Sign In'),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.music_note),
+                    label: const Text('Sign up with Spotify'),
+                    onPressed: _isLoading ? null : _signUpWithSpotify,
+                  ),
+                  const SizedBox(height: 12),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.account_circle),
+                    label: const Text('Sign up with Google'),
+                    onPressed: _isLoading ? null : _signUpWithGoogle,
+                  ),
                 ],
               ),
             ),

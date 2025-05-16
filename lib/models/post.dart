@@ -9,6 +9,8 @@ class Post {
   final String? userPhotoUrl;
   final DateTime timestamp;
   final String? userId;
+  final int likeCount;
+  final int commentCount;
 
   Post({
     this.id,
@@ -21,6 +23,8 @@ class Post {
     this.userPhotoUrl,
     required this.timestamp,
     this.userId,
+    this.likeCount = 0,
+    this.commentCount = 0,
   });
 
   Map<String, dynamic> toJson() {
@@ -35,6 +39,8 @@ class Post {
       'userPhotoUrl': userPhotoUrl,
       'timestamp': timestamp.toIso8601String(),
       'userId': userId,
+      'like_count': likeCount,
+      'comment_count': commentCount,
     };
   }
 
@@ -50,6 +56,8 @@ class Post {
       userPhotoUrl: map['userPhotoUrl'],
       timestamp: DateTime.parse(map['timestamp']),
       userId: map['userId'],
+      likeCount: map['like_count'] ?? 0,
+      commentCount: map['comment_count'] ?? 0,
     );
   }
 }

@@ -78,12 +78,13 @@ class _PostPageState extends State<PostPage> {
           return;
         }
         // TODO: Fetch user profile from Supabase
-        String displayName = user.displayName ?? user.email ?? 'anonymous';
+        // String? displayName = user.displayName; // Removed unused variable
+        String nameToUse = user.displayName ?? user.email;
         String? photoURL = user.photoURL;
         // TODO: Optionally fetch profile from Supabase and update displayName/photoURL
         final post = Post(
           id: DateTime.now().toIso8601String(),
-          username: displayName,
+          username: nameToUse,
           userPhotoUrl: photoURL,
           content: _contentController.text,
           musicSnippetUrl: _selectedFilePath,

@@ -2,19 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class SignInPage extends StatefulWidget {
+  const SignInPage({super.key});
 
   @override
-  _LoginPageState createState() => _LoginPageState();
+  State<SignInPage> createState() => _SignInPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _SignInPageState extends State<SignInPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   String? _errorMessage;
-  String? _pendingEmail;
-  dynamic _pendingCredential;
   bool _isLoading = false;
 
   @override
@@ -44,12 +42,35 @@ class _LoginPageState extends State<LoginPage> {
       setState(() {
         _isLoading = false;
       });
-      // Optionally navigate to main screen if needed
     } catch (e) {
       setState(() {
         _errorMessage = e.toString();
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _signInWithSpotify() async {
+    setState(() => _isLoading = true);
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      await authProvider.signInWithSpotify();
+    } catch (e) {
+      setState(() => _errorMessage = e.toString());
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _signInWithGoogle() async {
+    setState(() => _isLoading = true);
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      await authProvider.signInWithGoogle();
+    } catch (e) {
+      setState(() => _errorMessage = e.toString());
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
@@ -117,7 +138,24 @@ class _LoginPageState extends State<LoginPage> {
                         : const Text('Sign In'),
                   ),
                   const SizedBox(height: 12),
-                  // Optionally add sign up or OAuth buttons here
+                  OutlinedButton(
+                    onPressed: _isLoading
+                        ? null
+                        : () => Navigator.pushReplacementNamed(context, '/signup'),
+                    child: const Text('Don\'t have an account? Sign Up'),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.music_note),
+                    label: const Text('Sign in with Spotify'),
+                    onPressed: _isLoading ? null : _signInWithSpotify,
+                  ),
+                  const SizedBox(height: 12),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.account_circle),
+                    label: const Text('Sign in with Google'),
+                    onPressed: _isLoading ? null : _signInWithGoogle,
+                  ),
                 ],
               ),
             ),

@@ -25,8 +25,21 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> _loadUserProfile(String uid) async {
-    final res = await _supabase.from('profiles').select().eq('id', uid).single();
-    _userProfile = UserProfile.fromMap(res);
+    try {
+      final res = await _supabase.from('profiles').select().eq('id', uid).single();
+      _userProfile = UserProfile.fromMap(res);
+    } catch (e) {
+      // If not found, create a new profile with minimal info
+      final user = _supabase.auth.currentUser;
+      if (user != null) {
+        final newProfile = {
+          'id': user.id,
+          'email': user.email,
+        };
+        await _supabase.from('profiles').insert(newProfile);
+        _userProfile = UserProfile.fromMap(newProfile);
+      }
+    }
     notifyListeners();
   }
 
@@ -51,13 +64,30 @@ class AuthProvider with ChangeNotifier {
   Future<void> signInWithSpotify() async {
     await _supabase.auth.signInWithOAuth(
       OAuthProvider.spotify,
-      redirectTo: null, // Set if you use a custom scheme
+      // No redirectTo for mobile! Supabase will use the correct callback
     );
+  }
+
+  Future<void> signInWithGoogle() async {
+    // Use OAuthProvider.google for supabase_flutter <2.0.0, which matches your codebase
+    await _supabase.auth.signInWithOAuth(
+      OAuthProvider.google,
+      // No redirectTo for mobile! Supabase will use the correct callback
+    );
+  }
+
+  Future<void> signUpWithGoogle() async {
+    await signInWithGoogle();
   }
 
   Future<void> signOut() async {
     await _supabase.auth.signOut();
     _userProfile = null;
     notifyListeners();
+  }
+
+  // Public method to reload user profile
+  Future<void> reloadUserProfile(String uid) async {
+    await _loadUserProfile(uid);
   }
 }

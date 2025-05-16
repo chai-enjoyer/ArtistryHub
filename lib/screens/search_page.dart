@@ -2,10 +2,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lottie/lottie.dart';
-import '../services/api_service.dart';
 import '../providers/post_provider.dart';
 import '../models/post.dart';
 import 'detailed_post_page.dart';
+import 'other_user_profile_page.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -16,8 +16,6 @@ class SearchPage extends StatefulWidget {
 
 class _SearchPageState extends State<SearchPage> {
   final _searchController = TextEditingController();
-  final ApiService _apiService = ApiService();
-  List<dynamic> _artistResults = [];
   List<Post> _postResults = [];
   bool _isLoading = false;
   String? _error;
@@ -39,7 +37,6 @@ class _SearchPageState extends State<SearchPage> {
     _debounce = Timer(const Duration(milliseconds: 500), () async {
       if (query.isEmpty) {
         setState(() {
-          _artistResults = [];
           _postResults = [];
           _isLoading = false;
           _error = null;
@@ -51,7 +48,6 @@ class _SearchPageState extends State<SearchPage> {
         _error = null;
       });
       try {
-        final artistResult = await _apiService.searchArtist(query);
         final postProvider = Provider.of<PostProvider>(context, listen: false);
         final postResults = postProvider.posts.where((post) {
           final q = query.toLowerCase().trim();
@@ -66,7 +62,6 @@ class _SearchPageState extends State<SearchPage> {
           return matches && hasMusic && inDateRange;
         }).toList();
         setState(() {
-          _artistResults = artistResult['results']['artistmatches']['artist'];
           _postResults = postResults;
           _isLoading = false;
         });
@@ -99,7 +94,7 @@ class _SearchPageState extends State<SearchPage> {
             TextField(
               controller: _searchController,
               decoration: const InputDecoration(
-                hintText: 'Search artists or posts...',
+                hintText: 'Search posts... (artist search coming soon)',
                 suffixIcon: Icon(Icons.search),
               ),
               style: Theme.of(context).textTheme.bodyMedium,
@@ -152,31 +147,6 @@ class _SearchPageState extends State<SearchPage> {
               Expanded(
                 child: ListView(
                   children: [
-                    if (_artistResults.isNotEmpty) ...[
-                      Text(
-                        'Artists',
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      ..._artistResults.asMap().entries.map((entry) {
-                        final index = entry.key;
-                        final artist = entry.value;
-                        return AnimatedSlide(
-                          offset: Offset(0, index * 0.05),
-                          duration: const Duration(milliseconds: 200),
-                          child: ListTile(
-                            leading: const Icon(Icons.person),
-                            title: Text(
-                              artist['name'],
-                              style: Theme.of(context).textTheme.bodyLarge,
-                            ),
-                            subtitle: Text(
-                              'Listeners: ${artist['listeners']}',
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                          ),
-                        );
-                      }),
-                    ],
                     if (_postResults.isNotEmpty) ...[
                       Text(
                         'Posts',
@@ -196,9 +166,20 @@ class _SearchPageState extends State<SearchPage> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            subtitle: Text(
-                              'By ${post.username}',
-                              style: Theme.of(context).textTheme.bodySmall,
+                            subtitle: GestureDetector(
+                              child: Text(
+                                'By ${post.username}',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.blue),
+                              ),
+                              onTap: () {
+                                // Navigate to other user's profile page
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => OtherUserProfilePage(userId: post.userId ?? ''),
+                                  ),
+                                );
+                              },
                             ),
                             onTap: () {
                               Navigator.push(
